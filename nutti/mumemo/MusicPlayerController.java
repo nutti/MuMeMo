@@ -7,6 +7,8 @@ import java.util.Map;
 
 import javax.swing.JFrame;
 
+import nutti.mumemo.Constant.ComponentID;
+
 import javazoom.jlgui.basicplayer.*;
 
 public class MusicPlayerController extends IComponent
@@ -86,5 +88,17 @@ public class MusicPlayerController extends IComponent
 				//m_MusicPlayer.play( options[ 0 ] );
 			}
 		}
+	}
+
+	@Override
+	public void procMsg(ComponentID from, String msg) {
+		// TODO 自動生成されたメソッド・スタブ
+
+	}
+
+	@Override
+	public void procMsg(ComponentID from, String msg, String[] options) {
+		// TODO 自動生成されたメソッド・スタブ
+
 	}
 }

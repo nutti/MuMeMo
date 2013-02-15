@@ -1,22 +1,27 @@
 package nutti.mumemo;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.sql.Savepoint;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MetaDataHandler extends IComponent
+import javazoom.jlgui.basicplayer.BasicPlayerException;
+
+import nutti.mumemo.Constant.ComponentID;
+
+public class MetaDataHandler
 {
 
 	Map < String, String >		m_CommentFilePath = new HashMap < String, String > ();	// コメントファイルリスト
 	String						m_FileName;
 
-	public MetaDataHandler( MessageMediator mediator )
+	public MetaDataHandler()
 	{
-		super( mediator, "MetaDataHandler" );
 	}
 
 	// メタデータのロード
@@ -100,12 +105,4 @@ public class MetaDataHandler extends IComponent
 		return m_CommentFilePath.get( musicName );
 	}
 
-	public void procMsg( String msg )
-	{
-
-	}
-
-	public void procMsg( String msg, String[] options )
-	{
-	}
 }

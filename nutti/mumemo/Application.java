@@ -16,6 +16,7 @@ public class Application
 	private CommentWriter			m_CommWriter;		// コメントライター
 	private MessageMediator			m_MsgMediator;		// 全体制御
 	private MetaDataHandler			m_MetaDataHandler;	// メタデータハンドラ
+	private CommentFileHandler		m_CommFileHandler;	// コメントファイルハンドラ
 	//private MusicPlayerController	m_MusicPlayerCtrl;		// 音楽再生スレッド
 
 	public Application()
@@ -30,24 +31,42 @@ public class Application
 		m_PlayCtrl = new PlayController( m_MainWnd, m_MsgMediator );
 		m_MsgMediator.addComponent( m_PlayCtrl );
 
-		m_CommWriter = new CommentWriter( m_MainWnd, m_MsgMediator );
+		m_MetaDataHandler = new MetaDataHandler();
+		m_CommFileHandler = new CommentFileHandler();
+
+		m_CommWriter = new CommentWriter( m_MainWnd, m_MsgMediator, m_MetaDataHandler, m_CommFileHandler );
 		m_MsgMediator.addComponent( m_CommWriter );
 
-		m_MetaDataHandler = new MetaDataHandler( m_MsgMediator );
-		m_MsgMediator.addComponent( m_MetaDataHandler );
-		m_MetaDataHandler.loadMetaDataFile( "meta.dat" );
-		String path = m_MetaDataHandler.getCommentFilePath( "touho" );
-		if( path == null ){
-			m_MetaDataHandler.addMetaData( "touhou", "touhou.com" );
-		}
+
+
+		m_MsgMediator.postMsg( "App Init" );
+
+		//m_MetaDataHandler.loadMetaDataFile( "meta.dat" );
+		//String path = m_MetaDataHandler.getCommentFilePath( "touho" );
+		//if( path == null ){
+		//	m_MetaDataHandler.addMetaData( "touhou", "touhou.com" );
+		//}
 
 		//m_MusicPlayerCtrl = new MusicPlayerController( m_MsgMediator );
 		//m_MsgMediator.addComponent( m_MusicPlayerCtrl );
 
 		m_MainWnd.setVisible( true );
+
+		// 終了処理を追加
+		Runtime.getRuntime().addShutdownHook( new Shutdown() );
 	}
 
 	public void run()
 	{
+	}
+
+	// 終了処理
+	private class Shutdown extends Thread
+	{
+		public void run()
+		{
+			// アプリケーション全体に終了通知
+			m_MsgMediator.postMsg( "App Exit" );
+		}
 	}
 }

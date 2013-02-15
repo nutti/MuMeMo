@@ -17,6 +17,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 
+import nutti.mumemo.Constant.ComponentID;
+
 import javazoom.jlgui.basicplayer.BasicController;
 import javazoom.jlgui.basicplayer.BasicPlayer;
 import javazoom.jlgui.basicplayer.BasicPlayerEvent;
@@ -179,7 +181,7 @@ public class PlayController extends IComponent implements ActionListener
 		m_PlayCtrl.add( m_FileSelectBtn );
 
 		// 音楽ファイル名入力欄作成
-		m_MusicFileName = new JTextField();
+		m_MusicFileName = new JTextField( "C:/Users/N/Desktop/tsr/hello_music_world.mp3" );
 		m_MusicFileName.setBounds( 10, 60, 180, 20 );
 		m_PlayCtrl.add( m_MusicFileName );
 
@@ -197,10 +199,11 @@ public class PlayController extends IComponent implements ActionListener
 		if( cmd.equals( PLAY_BUTTON_NAME ) ){
 			String[] options = new String[ 1 ];
 			options[ 0 ] = m_MusicFileName.getText();
+			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Play", options );
 			m_MsgMediator.postMsg( "Play", options );
 		}
 		else if( cmd.equals( STOP_BUTTON_NAME ) ){
-			m_MsgMediator.postMsg( "Stop" );
+			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Stop" );
 		}
 		else if( cmd.equals( OPEN_BUTTON_NAME ) ){
 			m_MsgMediator.postMsg( "Open" );
@@ -220,14 +223,6 @@ public class PlayController extends IComponent implements ActionListener
 				File file = chooser.getSelectedFile();
 				String filePath = chooser.getCurrentDirectory() + "/" + file.getName();
 				m_MusicFileName.setText( filePath.replaceAll( "\\\\", "/" ) );
-			}
-		}
-		else if( msg.equals( "Stop" ) ){
-			try{
-				m_Player.stop();
-			}
-			catch( BasicPlayerException e ){
-				e.printStackTrace();
 			}
 		}
 		else if( msg.equals( "Pause" ) ){
@@ -251,17 +246,46 @@ public class PlayController extends IComponent implements ActionListener
 
 	public void procMsg( String msg, String[] options )
 	{
-		if( msg.equals( "Play" ) ){
-			if( options.length == 1 ){
-				File file = new File( options[ 0 ] );
-				try{
-					m_Player.open( file );
-					m_Player.play();
+	}
+
+	public void procMsg( ComponentID from, String msg )
+	{
+		switch( from ){
+			case COM_ID_PLAY_CONTROLLER:
+				if( msg.equals( "Stop" ) ){
+					try{
+						m_Player.stop();
+					}
+					catch( BasicPlayerException e ){
+						e.printStackTrace();
+					}
 				}
-				catch( BasicPlayerException e ){
-					e.printStackTrace();
+				break;
+			default:
+				break;
+		}
+	}
+
+	public void procMsg( ComponentID from, String msg, String[] options )
+	{
+		switch( from ){
+			case COM_ID_PLAY_CONTROLLER:
+				if( msg.equals( "Play" ) ){
+					if( options.length == 1 ){
+						File file = new File( options[ 0 ] );
+						try{
+							m_Player.open( file );
+							m_Player.play();
+						}
+						catch( BasicPlayerException e ){
+							e.printStackTrace();
+						}
+					}
 				}
-			}
+
+				break;
+			default:
+				break;
 		}
 	}
 }

@@ -1,5 +1,6 @@
 package nutti.lib;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,11 +19,17 @@ public class Util
 		stream.write( val );
 	}
 
+	public static void saveLong( FileOutputStream stream, long val ) throws IOException
+	{
+		int hi = (int) ( ( ( val ) >> 32 ) & 0xFFFFFFFF );
+		int lo = (int) ( val & 0xFFFFFFFF );
+
+		stream.write( hi );
+		stream.write( lo );
+	}
+
 	public static String loadStringUTF8( FileInputStream stream, int len ) throws UnsupportedEncodingException, IOException, LibException
 	{
-		if( ( len = stream.read() ) == -1 ){
-			throw new LibException( "Failed to read." );
-		}
 		byte[] buf;
 		buf = new byte [ len ];
 		if( stream.read( buf, 0, len ) == -1 ){
@@ -35,4 +42,26 @@ public class Util
 	{
 		return stream.read();
 	}
+
+	public static long loadLong( FileInputStream stream ) throws IOException
+	{
+		int hi = stream.read();
+		int lo = stream.read();
+
+		return ( (long)(hi) << 32 | (long)lo );
+	}
+
+	public static int getStringUTF8Byte( String str ) throws UnsupportedEncodingException
+	{
+		return str.getBytes( "UTF-8" ).length;
+	}
+
+	public static boolean fileExist( String fileName )
+	{
+		File file = new File( fileName );
+
+		return file.exists();
+	}
+
+
 }

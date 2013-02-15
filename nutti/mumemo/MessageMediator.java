@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import nutti.mumemo.Constant.ComponentID;
+
 
 public class MessageMediator extends IMessageMediator
 {
@@ -47,6 +49,24 @@ public class MessageMediator extends IMessageMediator
 		IComponent comp = m_ComponentList.get( name );
 		if( comp != null ){
 			comp.procMsg( msg );
+		}
+	}
+
+	public void postMsg( ComponentID from, String msg )
+	{
+		Iterator < String > it = m_ComponentList.keySet().iterator();
+		while( it.hasNext() ){
+			IComponent comp = m_ComponentList.get( it.next() );
+			comp.procMsg( from, msg );
+		}
+	}
+
+	public void postMsg( ComponentID from, String msg, String[] options )
+	{
+		Iterator < String > it = m_ComponentList.keySet().iterator();
+		while( it.hasNext() ){
+			IComponent comp = m_ComponentList.get( it.next() );
+			comp.procMsg( from, msg, options );
 		}
 	}
 }

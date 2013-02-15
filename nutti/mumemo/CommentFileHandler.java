@@ -6,19 +6,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import nutti.lib.LibException;
 import nutti.lib.Util;
+import nutti.mumemo.Constant.ComponentID;
 
-public class CommentFileHandler extends IComponent
+public class CommentFileHandler
 {
 	private class Header
 	{
 		int			m_MusicNameBytes;	// 曲名のバイト数
 		String		m_MusicName;		// 曲名
 		int			m_MusicLen;			// 曲の長さ
-		//int			m_TagTotal;			// タグ数
 	}
 
 	private class Tag
@@ -29,8 +30,7 @@ public class CommentFileHandler extends IComponent
 
 	private class Entry
 	{
-		int						m_Date;				// エントリ作成日
-		//int						m_MusicPos;			// エントリの音楽データにおける場所
+		long						m_Date;				// エントリ作成日
 		int						m_AuthorBytes;		// エントリ作成者名のバイト数
 		String					m_Author;			// エントリ作成者名
 		int						m_CommentBytes;		// コメントバイト数
@@ -48,15 +48,25 @@ public class CommentFileHandler extends IComponent
 	FileFormat				m_Format;
 	String					m_FileName;
 
-	public CommentFileHandler( MessageMediator mediator )
+	public CommentFileHandler()
 	{
-		super( mediator, "CommentFileHandler" );
+		m_Format = new FileFormat();
+		m_Format.m_Header = new Header();
+		m_Format.m_Tags = new ArrayList < Tag > ();
+		m_Format.m_Entries = new HashMap < Integer, ArrayList < Entry > > ();
 	}
 
-	private void save( String fileName )
+	public void createFile( String fileName )
+	{
+		m_FileName = fileName;
+
+		saveFile();
+	}
+
+	public void saveFile()
 	{
 		try {
-			FileOutputStream out = new FileOutputStream( fileName );
+			FileOutputStream out = new FileOutputStream( m_FileName );
 
 			// ヘッダの保存
 			Util.saveInt( out, m_Format.m_Header.m_MusicNameBytes );
@@ -77,7 +87,7 @@ public class CommentFileHandler extends IComponent
 				Util.saveInt( out, entries.getKey() );
 				Util.saveInt( out,  entries.getValue().size() );
 				for( Entry entry : entries.getValue() ){
-					Util.saveInt( out, entry.m_Date );
+					Util.saveLong( out, entry.m_Date );
 					Util.saveInt( out, entry.m_AuthorBytes );
 					Util.saveStringUTF8( out, entry.m_Author );
 					Util.saveInt( out, entry.m_CommentBytes );
@@ -102,7 +112,7 @@ public class CommentFileHandler extends IComponent
 
 	}
 
-	private void load( String fileName )
+	public void loadFile( String fileName )
 	{
 		m_FileName = fileName;
 
@@ -132,7 +142,7 @@ public class CommentFileHandler extends IComponent
 				int entryTotal = Util.loadInt( in );
 				for( int j = 0; j < entryTotal; ++j ){
 					Entry entry = new Entry();
-					entry.m_Date = Util.loadInt( in );
+					entry.m_Date = Util.loadLong( in );
 					entry.m_AuthorBytes = Util.loadInt( in );
 					entry.m_Author = Util.loadStringUTF8( in, entry.m_AuthorBytes );
 					entry.m_CommentBytes = Util.loadInt( in );
@@ -162,17 +172,56 @@ public class CommentFileHandler extends IComponent
 
 	}
 
-	private void addComment( String fileName )
+	public void addTag( String tagName )
 	{
+		try{
+			Tag tag = new Tag();
+			tag.m_TagName = tagName;
+			tag.m_TagNameBytes = Util.getStringUTF8Byte( tagName );
+			m_Format.m_Tags.add( tag );
+		}
+		catch( UnsupportedEncodingException e ){
+			e.printStackTrace();
+		}
+	}
 
+	public void addComment( int musicPos, long date, String author, String comment, ArrayList < Integer > tagList )
+	{
+		try{
+			Entry entry = new Entry();
+			entry.m_Date = date;
+			entry.m_AuthorBytes = Util.getStringUTF8Byte( author );
+			entry.m_Author = author;
+			entry.m_CommentBytes = Util.getStringUTF8Byte( comment );
+			entry.m_Comment = comment;
+			entry.m_TagList = tagList;
+			// 指定した音楽再生位置に、エントリが存在しない場合
+			if( m_Format.m_Entries.get( musicPos ) == null ){
+				ArrayList < Entry > entries = new ArrayList < Entry > ();
+				entries.add( entry );
+				m_Format.m_Entries.put( musicPos, entries );
+			}
+			// 指定した音楽再生位置に、エントリが存在する場合
+			else{
+				m_Format.m_Entries.get( musicPos ).add( entry );
+			}
+		}
+		catch( UnsupportedEncodingException e ){
+			e.printStackTrace();
+		}
+	}
+
+	void buildHeader( String musicName, int musicLen )
+	{
+		try{
+			m_Format.m_Header.m_MusicNameBytes = Util.getStringUTF8Byte( musicName );
+			m_Format.m_Header.m_MusicName = musicName;
+			m_Format.m_Header.m_MusicLen = musicLen;
+		}
+		catch( UnsupportedEncodingException e ){
+			e.printStackTrace();
+		}
 	}
 
 
-	public void procMsg( String msg )
-	{
-	}
-
-	public void procMsg( String msg, String[] options )
-	{
-	}
 }

@@ -1,5 +1,7 @@
 package nutti.mumemo;
 
+import nutti.mumemo.Constant.ComponentID;
+
 public abstract class IComponent
 {
 	protected IMessageMediator		m_MsgMediator;
@@ -19,4 +21,8 @@ public abstract class IComponent
 	public abstract void procMsg( String msg );
 
 	public abstract void procMsg( String msg, String[] options );
+
+	public abstract void procMsg( ComponentID from, String msg );
+
+	public abstract void procMsg( ComponentID from, String msg, String[] options );
 }
