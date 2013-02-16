@@ -147,9 +147,11 @@ public class CommentFileHandler
 					entry.m_Author = Util.loadStringUTF8( in, entry.m_AuthorBytes );
 					entry.m_CommentBytes = Util.loadInt( in );
 					entry.m_Comment = Util.loadStringUTF8( in, entry.m_CommentBytes );
+					entry.m_TagList = new ArrayList < Integer > ();
 					int tagIdxTotal = Util.loadInt( in );
 					for( int k = 0; k < tagIdxTotal; ++k ){
 						entry.m_TagList.add( Util.loadInt( in ) );
+						//entry.m_TagList.add( Util.loadInt( in ) );
 					}
 					entryList.add( entry );
 				}
@@ -211,7 +213,7 @@ public class CommentFileHandler
 		}
 	}
 
-	void buildHeader( String musicName, int musicLen )
+	public void buildHeader( String musicName, int musicLen )
 	{
 		try{
 			m_Format.m_Header.m_MusicNameBytes = Util.getStringUTF8Byte( musicName );
@@ -223,5 +225,63 @@ public class CommentFileHandler
 		}
 	}
 
+	public int getTagEntriesTotal()
+	{
+		return m_Format.m_Tags.size();
+	}
 
+	public String getTagName( int idx )
+	{
+		return m_Format.m_Tags.get( idx ).m_TagName;
+	}
+
+	public int getCommentEntriesTotal( int second )
+	{
+		if( m_Format.m_Entries.get( second ) != null ){
+			return m_Format.m_Entries.get( second ).size();
+		}
+		return 0;
+	}
+
+	public String getComment( int second, int idx )
+	{
+		return m_Format.m_Entries.get( second ).get( idx ).m_Comment;
+	}
+
+	public String getCommentAuthor( int second, int idx )
+	{
+		return m_Format.m_Entries.get( second ).get( idx ).m_Author;
+	}
+
+	public ArrayList < Integer > getCommentRelatedTagList( int second, int idx )
+	{
+		return m_Format.m_Entries.get( second ).get( idx ).m_TagList;
+	}
+
+	public long getCommentedDate( int second, int idx )
+	{
+		return m_Format.m_Entries.get( second ).get( idx ).m_Date;
+	}
+
+	public boolean commentReleatedTag( int second, int idx, int tag )
+	{
+		for( Integer i : m_Format.m_Entries.get( second ).get( idx ).m_TagList ){
+			if( i == tag ){
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public boolean tagExist( String tagName )
+	{
+		for( Tag tag : m_Format.m_Tags ){
+			if( tag.m_TagName.equals( tagName ) ){
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

@@ -17,7 +17,7 @@ public class Application
 	private MessageMediator			m_MsgMediator;		// 全体制御
 	private MetaDataHandler			m_MetaDataHandler;	// メタデータハンドラ
 	private CommentFileHandler		m_CommFileHandler;	// コメントファイルハンドラ
-	//private MusicPlayerController	m_MusicPlayerCtrl;		// 音楽再生スレッド
+	private CommentPlayer			m_CommPlayer;		// コメント表示
 
 	public Application()
 	{
@@ -37,18 +37,10 @@ public class Application
 		m_CommWriter = new CommentWriter( m_MainWnd, m_MsgMediator, m_MetaDataHandler, m_CommFileHandler );
 		m_MsgMediator.addComponent( m_CommWriter );
 
-
+		m_CommPlayer = new CommentPlayer( m_MainWnd, m_MsgMediator, m_CommFileHandler );
+		m_MsgMediator.addComponent( m_CommPlayer );
 
 		m_MsgMediator.postMsg( "App Init" );
-
-		//m_MetaDataHandler.loadMetaDataFile( "meta.dat" );
-		//String path = m_MetaDataHandler.getCommentFilePath( "touho" );
-		//if( path == null ){
-		//	m_MetaDataHandler.addMetaData( "touhou", "touhou.com" );
-		//}
-
-		//m_MusicPlayerCtrl = new MusicPlayerController( m_MsgMediator );
-		//m_MsgMediator.addComponent( m_MusicPlayerCtrl );
 
 		m_MainWnd.setVisible( true );
 

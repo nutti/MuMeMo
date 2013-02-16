@@ -47,8 +47,10 @@ public class PlayController extends IComponent implements ActionListener
 	private JLabel			m_MusicLengthLbl;		// 音楽ファイルの長さ
 	private JLabel			m_PlayTimeLbl;			// 再生時間
 
-	private BasicPlayer		m_Player;			// Basic Player
-	private Map				m_AudioInfo;		// 再生中の曲情報
+	private BasicPlayer		m_Player;				// Basic Player
+	private Map				m_AudioInfo;			// 再生中の曲情報
+
+	private int				m_PrevSec;				// 前回更新時の時間
 
 	private BasicPlayerListener		m_BasicListener = new BasicPlayerListener()
 	{
@@ -64,18 +66,21 @@ public class PlayController extends IComponent implements ActionListener
 			// 現在の音楽再生位置を取得
 			long length = Long.parseLong( m_AudioInfo.get( "audio.length.bytes" ).toString() );		// 音楽のバイト総数
 			int curSeekPos = ( int ) ( ( double )bytesread / length * m_SeekBar.getMaximum() );			// 現在のシークバーの位置
+
+			// 音楽の長さを秒単位で取得
+			// 全バイト数 / 1秒あたりの転送バイト数（ビットレート）
+			String type = m_AudioInfo.get( "audio.type" ).toString();
+			long bitrate = Long.parseLong( m_AudioInfo.get( "mp3.bitrate.nominal.bps" ).toString() );	// ビットレート
+
+			int totalSecond = ( int ) ( length / ( bitrate / 8 ) );						// 音楽総再生時間
+
+			// 再生時間を秒単位で取得
+			// 読み込んだバイト数 * 音楽の長さ / 音楽のバイト総数
+			int curSecond = ( int ) ( bytesread * totalSecond / length );
+
 			// シークバーの位置を更新しなくてはならない場合
 			if( curSeekPos != m_SeekBar.getValue() && !m_SeekBar.getValueIsAdjusting() ){
 				m_SeekBar.removeAdjustmentListener( m_AdjListener );
-
-				// 音楽の長さを秒単位で取得
-				// 全バイト数 / 1秒あたりの転送バイト数（ビットレート）
-				long bitrate = Long.parseLong( m_AudioInfo.get( "bitrate" ).toString() );	// ビットレート
-				int totalSecond = ( int ) ( length / ( bitrate / 8 ) );						// 音楽総再生時間
-
-				// 再生時間を秒単位で取得
-				// 読み込んだバイト数 * 音楽の長さ / 音楽のバイト総数
-				int curSecond = ( int ) ( bytesread * totalSecond / length );
 
 				// 音楽の長さを取得
 				int dispTotMin = totalSecond / 60;
@@ -87,6 +92,14 @@ public class PlayController extends IComponent implements ActionListener
 				m_MusicLengthLbl.setText( String.format( "%1$d:%2$02d", dispTotMin, dispTotSec ) );
 				m_PlayTimeLbl.setText( String.format( "%1$d:%2$02d", dispCurMin, dispCurSec ) );
 				m_SeekBar.addAdjustmentListener( m_AdjListener );
+
+			}
+
+			if( Math.abs( m_PrevSec - curSecond ) > 0 ){
+				String[] options = new String[ 1 ];
+				options[ 0 ] = Integer.toString( curSecond );
+				m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Update Time", options );
+				m_PrevSec = curSecond;
 			}
 		}
 		public void setController( BasicController controller )
@@ -120,8 +133,10 @@ public class PlayController extends IComponent implements ActionListener
 	{
 		super( mediator, "PlayerController" );
 
+		m_PrevSec = -1;
+
 		m_PlayCtrl = new JPanel();
-		m_PlayCtrl.setBounds( 10, 10, 300, 200 );
+		m_PlayCtrl.setBounds( 10, 10, 300, 100 );
 		m_PlayCtrl.setBackground( Color.BLACK );
 		m_PlayCtrl.setLayout( null );
 
@@ -281,6 +296,7 @@ public class PlayController extends IComponent implements ActionListener
 							e.printStackTrace();
 						}
 					}
+					m_PrevSec = -1;
 				}
 
 				break;

@@ -8,9 +8,11 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 import nutti.lib.Util;
 import nutti.mumemo.Constant.ComponentID;
@@ -18,14 +20,20 @@ import nutti.mumemo.Constant.ComponentID;
 public class CommentWriter extends IComponent implements ActionListener
 {
 	private static final String COMMENT_BUTTON_NAME = "Comment";
+	private static final String CREATE_TAG_BUTTON_NAME = "Create Tag";
 
 	private JPanel					m_CommWriter;					// コメントライター
 	private JTextArea				m_CommInputArea;				// コメント入力エリア
 	private boolean					m_ClickedCommInputAreaFirst;	// コメント入力エリアをクリックしたのが初めての場合
 	private JButton					m_CommButton;					// コメントを書くボタン
+	private JComboBox				m_TagSelectList;				// 選択可能なタグリスト
+	private JTextField				m_NewTagNameInputArea;			// 新しいタグ名入力エリア
+	private JButton					m_CreateTagBtn;					// 新しいタグ作成ボタン
 
 	private MetaDataHandler			m_MetaDataHandler;				// メタデータハンドラ
 	private CommentFileHandler		m_CommFileHandler;				// コメントファイルハンドラ
+
+	private int						m_PlayTime;						// 再生時間
 
 	// コメント入力エリアへのマウスイベント
 	private MouseListener	m_CommInputAreaML = new MouseListener()
@@ -64,7 +72,7 @@ public class CommentWriter extends IComponent implements ActionListener
 
 		// コメントライター領域
 		m_CommWriter = new JPanel();
-		m_CommWriter.setBounds( 180, 160, 200, 200 );
+		m_CommWriter.setBounds( 180, 160, 250, 200 );
 		m_CommWriter.setBackground( Color.WHITE );
 		m_CommWriter.setLayout( null );
 
@@ -83,6 +91,24 @@ public class CommentWriter extends IComponent implements ActionListener
 		m_CommButton.setActionCommand( m_CommButton.getText() );
 		m_CommWriter.add( m_CommButton );
 
+		// 選択可能なタグリスト
+		m_TagSelectList = new JComboBox();
+		m_TagSelectList.setBounds( 10, 140, 120, 20 );
+		m_TagSelectList.addItem( "Select Tags" );
+		m_CommWriter.add( m_TagSelectList );
+
+		// 新しいタグ名入力エリア
+		m_NewTagNameInputArea = new JTextField();
+		m_NewTagNameInputArea.setBounds( 10, 170, 100, 20 );
+		m_CommWriter.add( m_NewTagNameInputArea );
+
+		// 新しいタグ作成ボタン
+		m_CreateTagBtn = new JButton( CREATE_TAG_BUTTON_NAME );
+		m_CreateTagBtn.setBounds( 110, 170, 80, 20 );
+		m_CreateTagBtn.addActionListener( this );
+		m_CreateTagBtn.setActionCommand( m_CreateTagBtn.getText() );
+		m_CommWriter.add( m_CreateTagBtn );
+
 		mainWnd.add( m_CommWriter );
 	}
 
@@ -94,6 +120,11 @@ public class CommentWriter extends IComponent implements ActionListener
 			String options[] = new String [ 1 ];
 			options[ 0 ] = m_CommInputArea.getText();
 			m_MsgMediator.postMsg( ComponentID.COM_ID_COMMENT_WRITER, "Comment", options );
+		}
+		else if( cmd.equals( CREATE_TAG_BUTTON_NAME ) ){
+			String options[] = new String [ 1 ];
+			options[ 0 ] = m_NewTagNameInputArea.getText();
+			m_MsgMediator.postMsg( ComponentID.COM_ID_COMMENT_WRITER, "Create Tag", options );
 		}
 	}
 
@@ -128,12 +159,19 @@ public class CommentWriter extends IComponent implements ActionListener
 			case COM_ID_COMMENT_WRITER:
 				if( msg.equals( "Comment" ) ){
 					ArrayList < Integer > tagList = new ArrayList < Integer > ();
-					tagList.add( 1 );
-					m_CommFileHandler.addComment( 0, System.currentTimeMillis(), "nutti", "test", tagList );
+					tagList.add( m_TagSelectList.getSelectedIndex() - 1 );
+					m_CommFileHandler.addComment( m_PlayTime, System.currentTimeMillis(), "nutti", options[ 0 ], tagList );
 					m_CommInputArea.setText( "" );
 				}
+				else if( msg.equals( "Create Tag" ) ){
+					if( m_CommFileHandler.tagExist( options[ 0 ] ) ){
+						m_CommFileHandler.addTag( options[ 0 ] );
+						m_TagSelectList.addItem( options[ 0 ] );
+						m_NewTagNameInputArea.setText( "" );
+					}
+				}
 				break;
-			case COM_ID_PLAY_CONTROLLER:
+ 			case COM_ID_PLAY_CONTROLLER:
 				if( msg.equals( "Play" ) ){
 					String[] elms = options[ 0 ].split( "/" );
 					String fileName = elms[ elms.length - 1 ];
@@ -150,9 +188,16 @@ public class CommentWriter extends IComponent implements ActionListener
 						m_CommFileHandler.buildHeader( fileName, 0 );
 						m_CommFileHandler.createFile( filePath );
 					}
+					// タグ情報の読み込み
+					for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
+						m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
+					}
 				}
 				else if( msg.equals( "Stop" ) ){
 					m_CommFileHandler.saveFile();
+				}
+				else if( msg.equals( "Update Time" ) ){
+					m_PlayTime = Integer.parseInt( options[ 0 ] );
 				}
 			default:
 				break;
