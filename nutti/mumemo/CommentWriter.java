@@ -65,7 +65,7 @@ public class CommentWriter extends IComponent implements ActionListener
 
 	public CommentWriter( JFrame mainWnd, IMessageMediator mediator, MetaDataHandler meta, CommentFileHandler comm )
 	{
-		super( mediator, "CommentWriter" );
+		super( mediator, ComponentID.COM_ID_COMMENT_WRITER );
 
 		m_MetaDataHandler = meta;
 		m_CommFileHandler = comm;
@@ -130,9 +130,9 @@ public class CommentWriter extends IComponent implements ActionListener
 
 	public void procMsg( String msg )
 	{
-		if( msg.equals( "App Init" ) ){
-			m_MetaDataHandler.loadMetaDataFile( "meta.dat" );
-		}
+	//	if( msg.equals( "App Init" ) ){
+	//		m_MetaDataHandler.loadMetaDataFile( "meta.dat" );
+	//	}
 	}
 
 	public void procMsg( String msg, String[] options )
@@ -172,7 +172,7 @@ public class CommentWriter extends IComponent implements ActionListener
 				}
 				break;
  			case COM_ID_PLAY_CONTROLLER:
-				if( msg.equals( "Play" ) ){
+/*				if( msg.equals( "Play" ) ){
 					String[] elms = options[ 0 ].split( "/" );
 					String fileName = elms[ elms.length - 1 ];
 					String filePath = Constant.COMMENT_FILE_DIR  + "/" + fileName + Constant.COMMENT_FILE_SUFFIX;
@@ -193,12 +193,35 @@ public class CommentWriter extends IComponent implements ActionListener
 						m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
 					}
 				}
-				else if( msg.equals( "Stop" ) ){
+				else */if( msg.equals( "Stop" ) ){
 					m_CommFileHandler.saveFile();
 				}
 				else if( msg.equals( "Update Time" ) ){
 					m_PlayTime = Integer.parseInt( options[ 0 ] );
 				}
+ 			case COM_ID_PLAY_LIST:
+ 				if( msg.equals( "Prepare Comment Data" ) ){
+					String[] elms = options[ 0 ].split( "/" );
+					String fileName = elms[ elms.length - 1 ];
+					String filePath = Constant.COMMENT_FILE_DIR  + "/" + fileName + Constant.COMMENT_FILE_SUFFIX;
+					// メタデータ
+					if( m_MetaDataHandler.getCommentFilePath( fileName ) == null ){
+						m_MetaDataHandler.addMetaData( fileName, filePath );
+					}
+					// コメントデータ
+					if( Util.fileExist( filePath ) ){
+						m_CommFileHandler.loadFile( filePath );
+					}
+					else{
+						m_CommFileHandler.buildHeader( fileName, 0 );
+						m_CommFileHandler.createFile( filePath );
+					}
+					// タグ情報の読み込み
+					for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
+						m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
+					}
+				}
+ 				break;
 			default:
 				break;
 		}

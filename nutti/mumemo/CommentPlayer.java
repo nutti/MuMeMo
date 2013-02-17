@@ -24,7 +24,7 @@ public class CommentPlayer extends IComponent
 
 	public CommentPlayer( JFrame mainWnd, IMessageMediator mediator, CommentFileHandler comm )
 	{
-		super( mediator, "CommentPlayer" );
+		super( mediator, ComponentID.COM_ID_COMMENT_PLAYER );
 
 		m_CommFileHandler = comm;
 
@@ -57,12 +57,12 @@ public class CommentPlayer extends IComponent
 
 	public void procMsg( String msg, String[] options )
 	{
-		if( msg.equals( "Play" ) ){
-			// タグ情報の読み込み
-			for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
-				m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
-			}
-		}
+	//	if( msg.equals( "Play" ) ){
+	//		// タグ情報の読み込み
+	//		for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
+	//			m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
+	//		}
+	//	}
 	}
 
 	public void procMsg( ComponentID from, String msg )
@@ -101,6 +101,13 @@ public class CommentPlayer extends IComponent
 					}
 				}
 				break;
+			case COM_ID_PLAY_LIST:
+				if( msg.equals( "Double Clicked" ) ){
+					// タグ情報の読み込み
+					for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
+						m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
+					}
+				}
 			default:
 				break;
 		}

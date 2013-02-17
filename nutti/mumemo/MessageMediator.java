@@ -9,7 +9,7 @@ import nutti.mumemo.Constant.ComponentID;
 
 public class MessageMediator extends IMessageMediator
 {
-	Map < String, IComponent >		m_ComponentList = new HashMap < String, IComponent > ();	// コンポーネントリスト
+	Map < ComponentID, IComponent >		m_ComponentList = new HashMap < ComponentID, IComponent > ();	// コンポーネントリスト
 
 	public MessageMediator()
 	{
@@ -19,14 +19,14 @@ public class MessageMediator extends IMessageMediator
 	// コンポーネント追加
 	public void addComponent( IComponent component )
 	{
-		m_ComponentList.put( component.getName(), component );
+		m_ComponentList.put( component.getID(), component );
 
 	}
 
 	// 全体へメッセージ送信
 	public void postMsg( String msg )
 	{
-		Iterator < String > it = m_ComponentList.keySet().iterator();
+		Iterator < ComponentID > it = m_ComponentList.keySet().iterator();
 		while( it.hasNext() ){
 			IComponent comp = m_ComponentList.get( it.next() );
 			comp.procMsg( msg );
@@ -36,7 +36,7 @@ public class MessageMediator extends IMessageMediator
 	// 全体へメッセージ送信（オプション付）
 	public void postMsg( String msg, String[] options )
 	{
-		Iterator < String > it = m_ComponentList.keySet().iterator();
+		Iterator < ComponentID > it = m_ComponentList.keySet().iterator();
 		while( it.hasNext() ){
 			IComponent comp = m_ComponentList.get( it.next() );
 			comp.procMsg( msg, options );
@@ -54,7 +54,7 @@ public class MessageMediator extends IMessageMediator
 
 	public void postMsg( ComponentID from, String msg )
 	{
-		Iterator < String > it = m_ComponentList.keySet().iterator();
+		Iterator < ComponentID > it = m_ComponentList.keySet().iterator();
 		while( it.hasNext() ){
 			IComponent comp = m_ComponentList.get( it.next() );
 			comp.procMsg( from, msg );
@@ -63,9 +63,25 @@ public class MessageMediator extends IMessageMediator
 
 	public void postMsg( ComponentID from, String msg, String[] options )
 	{
-		Iterator < String > it = m_ComponentList.keySet().iterator();
+		Iterator < ComponentID > it = m_ComponentList.keySet().iterator();
 		while( it.hasNext() ){
 			IComponent comp = m_ComponentList.get( it.next() );
+			comp.procMsg( from, msg, options );
+		}
+	}
+
+	public void postMsg( ComponentID from, ComponentID to, String msg )
+	{
+		IComponent comp = m_ComponentList.get( to );
+		if( comp != null ){
+			comp.procMsg( from, msg );
+		}
+	}
+
+	public void postMsg( ComponentID from, ComponentID to, String msg, String[] options )
+	{
+		IComponent comp = m_ComponentList.get( to );
+		if( comp != null ){
 			comp.procMsg( from, msg, options );
 		}
 	}

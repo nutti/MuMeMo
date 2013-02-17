@@ -8,7 +8,6 @@ import java.awt.event.AdjustmentListener;
 import java.io.File;
 import java.util.Map;
 
-import javax.swing.ButtonModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -131,7 +130,8 @@ public class PlayController extends IComponent implements ActionListener
 	// コンストラクタ
 	public PlayController( JFrame mainWnd, IMessageMediator mediator )
 	{
-		super( mediator, "PlayerController" );
+		super( mediator, ComponentID.COM_ID_PLAY_CONTROLLER );
+
 
 		m_PrevSec = -1;
 
@@ -214,8 +214,8 @@ public class PlayController extends IComponent implements ActionListener
 		if( cmd.equals( PLAY_BUTTON_NAME ) ){
 			String[] options = new String[ 1 ];
 			options[ 0 ] = m_MusicFileName.getText();
-			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Play", options );
-			m_MsgMediator.postMsg( "Play", options );
+			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Play Button Pushed", options );
+			//m_MsgMediator.postMsg( "Play", options );
 		}
 		else if( cmd.equals( STOP_BUTTON_NAME ) ){
 			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Stop" );
@@ -284,8 +284,8 @@ public class PlayController extends IComponent implements ActionListener
 	public void procMsg( ComponentID from, String msg, String[] options )
 	{
 		switch( from ){
-			case COM_ID_PLAY_CONTROLLER:
-				if( msg.equals( "Play" ) ){
+			case COM_ID_PLAY_LIST:
+				if( msg.equals( "Double Clicked" ) ){
 					if( options.length == 1 ){
 						File file = new File( options[ 0 ] );
 						try{

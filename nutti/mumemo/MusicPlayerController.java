@@ -5,7 +5,6 @@ import java.awt.event.AdjustmentListener;
 import java.io.File;
 import java.util.Map;
 
-import javax.swing.JFrame;
 
 import nutti.mumemo.Constant.ComponentID;
 
@@ -13,8 +12,6 @@ import javazoom.jlgui.basicplayer.*;
 
 public class MusicPlayerController extends IComponent
 {
-	//private Thread			m_MusicPlayerThread;
-	//private MusicPlayer		m_MusicPlayer;
 
 	private BasicPlayer		m_Player;			// Basic Player
 	private Map				m_AudioInfo;		// 再生中の曲情報
@@ -45,7 +42,7 @@ public class MusicPlayerController extends IComponent
 
 	public MusicPlayerController( IMessageMediator mediator )
 	{
-		super( mediator, "MusicPlayerController" );
+		super( mediator, ComponentID.COM_ID_PLAY_CONTROLLER );
 
 	//	m_MusicPlayer = new MusicPlayer();
 	//	m_MusicPlayerThread = new Thread( m_MusicPlayer );

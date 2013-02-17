@@ -1,18 +1,14 @@
 package nutti.mumemo;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.sql.Savepoint;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-
-import javazoom.jlgui.basicplayer.BasicPlayerException;
-
-import nutti.mumemo.Constant.ComponentID;
 
 public class MetaDataHandler
 {
@@ -103,6 +99,19 @@ public class MetaDataHandler
 	public String getCommentFilePath( String musicName )
 	{
 		return m_CommentFilePath.get( musicName );
+	}
+
+	public ArrayList < String > getMusicNameList()
+	{
+		ArrayList < String > list = new ArrayList < String > ();
+
+		Iterator < String > it = m_CommentFilePath.keySet().iterator();
+		while( it.hasNext() ){
+			String s = it.next();
+			list.add( s );
+		}
+
+		return list;
 	}
 
 }

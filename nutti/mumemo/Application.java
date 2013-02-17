@@ -4,6 +4,8 @@ import java.awt.Rectangle;
 
 import javax.swing.JFrame;
 
+import nutti.mumemo.Constant.ComponentID;
+
 
 public class Application
 {
@@ -18,6 +20,7 @@ public class Application
 	private MetaDataHandler			m_MetaDataHandler;	// メタデータハンドラ
 	private CommentFileHandler		m_CommFileHandler;	// コメントファイルハンドラ
 	private CommentPlayer			m_CommPlayer;		// コメント表示
+	private PlayList				m_PlayList;			// プレイリスト
 
 	public Application()
 	{
@@ -32,6 +35,8 @@ public class Application
 		m_MsgMediator.addComponent( m_PlayCtrl );
 
 		m_MetaDataHandler = new MetaDataHandler();
+		m_MetaDataHandler.loadMetaDataFile( "meta.dat" );
+
 		m_CommFileHandler = new CommentFileHandler();
 
 		m_CommWriter = new CommentWriter( m_MainWnd, m_MsgMediator, m_MetaDataHandler, m_CommFileHandler );
@@ -40,7 +45,10 @@ public class Application
 		m_CommPlayer = new CommentPlayer( m_MainWnd, m_MsgMediator, m_CommFileHandler );
 		m_MsgMediator.addComponent( m_CommPlayer );
 
-		m_MsgMediator.postMsg( "App Init" );
+		m_PlayList = new PlayList( m_MainWnd, m_MsgMediator, m_MetaDataHandler );
+		m_MsgMediator.addComponent( m_PlayList );
+
+		m_MsgMediator.postMsg( ComponentID.COM_ID_APP_MAIN, "App Init" );
 
 		m_MainWnd.setVisible( true );
 

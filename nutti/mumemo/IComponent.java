@@ -5,17 +5,17 @@ import nutti.mumemo.Constant.ComponentID;
 public abstract class IComponent
 {
 	protected IMessageMediator		m_MsgMediator;
-	private String					m_Name;
+	private ComponentID						m_ID;			// コンポーネントID
 
-	public IComponent( IMessageMediator mediator, String name )
+	public IComponent( IMessageMediator mediator, ComponentID id )
 	{
-		m_Name = name;
 		m_MsgMediator = mediator;
+		m_ID = id;
 	}
 
-	public String getName()
+	public ComponentID getID()
 	{
-		return m_Name;
+		return m_ID;
 	}
 
 	public abstract void procMsg( String msg );
@@ -25,4 +25,5 @@ public abstract class IComponent
 	public abstract void procMsg( ComponentID from, String msg );
 
 	public abstract void procMsg( ComponentID from, String msg, String[] options );
+
 }
