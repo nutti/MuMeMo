@@ -16,16 +16,16 @@ public class Util
 
 	public static void saveInt( FileOutputStream stream, int val ) throws IOException
 	{
-		stream.write( val );
+		for( int i = 0; i < 4; ++i ){
+			stream.write( ( int ) ( ( val >> ( i * 8 ) ) & 0xFF ) );
+		}
 	}
 
 	public static void saveLong( FileOutputStream stream, long val ) throws IOException
 	{
-		int hi = (int) ( ( ( val ) >> 32 ) & 0xFFFFFFFF );
-		int lo = (int) ( val & 0xFFFFFFFF );
-
-		stream.write( hi );
-		stream.write( lo );
+		for( int i = 0; i < 8; ++i ){
+			stream.write( ( int ) ( ( val >> ( i * 8 ) ) & 0xFF ) );
+		}
 	}
 
 	public static String loadStringUTF8( FileInputStream stream, int len ) throws UnsupportedEncodingException, IOException, LibException
@@ -38,17 +38,34 @@ public class Util
 		return new String( buf, "UTF-8" );
 	}
 
-	public static int loadInt( FileInputStream stream ) throws IOException
+	public static int loadInt( FileInputStream stream ) throws IOException, LibException
 	{
-		return stream.read();
+		int value = 0;
+
+		for( int i = 0; i < 4; ++i ){
+			int val = stream.read();
+			if( val == -1 ){
+				throw new LibException( "Failed to read.");
+			}
+			value |= ( val ) << ( i * 8 );
+		}
+
+		return value;
 	}
 
-	public static long loadLong( FileInputStream stream ) throws IOException
+	public static long loadLong( FileInputStream stream ) throws IOException, LibException
 	{
-		int hi = stream.read();
-		int lo = stream.read();
+		long value = 0;
 
-		return ( (long)(hi) << 32 | (long)lo );
+		for( int i = 0; i < 8; ++i ){
+			int val = stream.read();
+			if( val == -1 ){
+				throw new LibException( "Failed to read.");
+			}
+			value |= ( val ) << ( i * 8 );
+		}
+
+		return value;
 	}
 
 	public static int getStringUTF8Byte( String str ) throws UnsupportedEncodingException

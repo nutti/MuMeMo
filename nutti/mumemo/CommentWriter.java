@@ -201,19 +201,20 @@ public class CommentWriter extends IComponent implements ActionListener
 				}
  			case COM_ID_PLAY_LIST:
  				if( msg.equals( "Prepare Comment Data" ) ){
-					String[] elms = options[ 0 ].split( "/" );
-					String fileName = elms[ elms.length - 1 ];
-					String filePath = Constant.COMMENT_FILE_DIR  + "/" + fileName + Constant.COMMENT_FILE_SUFFIX;
+					String[] elms = options[ 2 ].split( "/" );
+					long musicLen = Long.parseLong( options[ 1 ] );
+					String musicName = elms[ elms.length - 1 ];
+					String filePath = Constant.COMMENT_FILE_DIR  + "/[" + options[ 1 ] + "]" + musicName + Constant.COMMENT_FILE_SUFFIX;
 					// メタデータ
-					if( m_MetaDataHandler.getCommentFilePath( fileName ) == null ){
-						m_MetaDataHandler.addMetaData( fileName, filePath );
+					if( m_MetaDataHandler.getCommentFilePath( musicName, musicLen ) == null ){
+						m_MetaDataHandler.addMetaData( musicName, musicLen, filePath );
 					}
 					// コメントデータ
 					if( Util.fileExist( filePath ) ){
 						m_CommFileHandler.loadFile( filePath );
 					}
 					else{
-						m_CommFileHandler.buildHeader( fileName, 0 );
+						m_CommFileHandler.buildHeader( musicName, 0 );
 						m_CommFileHandler.createFile( filePath );
 					}
 					// タグ情報の読み込み

@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import nutti.lib.LibException;
+import nutti.lib.Util;
+
 public class MetaDataHandler
 {
 
@@ -31,28 +34,29 @@ public class MetaDataHandler
 
 			while( true ){
 				int len;
-				byte[] buf;
+				long musicLen;				// 音楽の長さ
 				String musicName;			// 音楽名
 				String commFilePath;		// コメントファイルパス
 
-				if( ( len = in.read() ) == -1 ){
+				if( ( len = Util.loadInt( in ) ) == -1 ){
 					break;
 				}
-				buf = new byte [ len ];
-				if( in.read( buf, 0, len ) == -1 ){
-					break;
-				}
-				musicName = new String( buf, "UTF-8" );
 
-				if( ( len = in.read() ) == -1 ){
+				if( ( musicName = Util.loadStringUTF8( in, len ) ) == null ){
 					break;
 				}
-				buf = new byte [ len ];
-				if( in.read( buf, 0, len ) == -1 ){
+
+				if( ( musicLen = Util.loadLong( in ) ) == -1 ){
 					break;
 				}
-				commFilePath = new String( buf, "UTF-8" );
-				m_CommentFilePath.put( musicName, commFilePath );
+
+				if( ( len = Util.loadInt( in ) ) == -1 ){
+					break;
+				}
+				if( ( commFilePath = Util.loadStringUTF8( in, len ) ) == null ){
+					break;
+				}
+				m_CommentFilePath.put( "[" + Long.toString( musicLen ) + "]" + musicName, commFilePath );
 			}
 		}
 		catch( FileNotFoundException e ){
@@ -62,28 +66,36 @@ public class MetaDataHandler
 			e.printStackTrace();
 		}
 		catch( IOException e ){
+			e.printStackTrace();
+		}
+		catch( LibException e ){
 			e.printStackTrace();
 		}
 	}
 
 	// メタデータの追加
-	public void addMetaData( String musicName, String commFilePath )
+	public void addMetaData( String musicName, long musicLen, String commFilePath )
 	{
 		try{
+			String name = "[" + Long.toString( musicLen ) + "]" + musicName;
 			// 既に同名のエントリが存在する場合は、無視
-			if( m_CommentFilePath.get( musicName ) != null ){
+			if( m_CommentFilePath.get( name ) != null ){
 				return;
 			}
 
 			// エントリをファイルに追記する
 			FileOutputStream out = new FileOutputStream( m_FileName, true );
-			int musicNameLen = musicName.getBytes( "UTF-8" ).length;
-			int commFilePathLen = commFilePath.getBytes( "UTF-8" ).length;
+			int musicNameLen = Util.getStringUTF8Byte( musicName );
+			int commFilePathLen = Util.getStringUTF8Byte( commFilePath );
 
-			out.write( musicNameLen );
-			out.write( musicName.getBytes( "UTF-8" ), 0, musicNameLen );
-			out.write( commFilePathLen );
-			out.write( commFilePath.getBytes( "UTF-8" ), 0, commFilePathLen );
+			Util.saveInt( out, musicNameLen );
+			Util.saveStringUTF8( out, musicName );
+			Util.saveLong( out, musicLen );
+			Util.saveInt( out, commFilePathLen );
+			Util.saveStringUTF8( out, commFilePath );
+
+			m_CommentFilePath.put( name, commFilePath );
+
 		}
 		catch( FileNotFoundException e ){
 			e.printStackTrace();
@@ -96,9 +108,11 @@ public class MetaDataHandler
 		}
 	}
 
-	public String getCommentFilePath( String musicName )
+	public String getCommentFilePath( String musicName, long musicLen )
 	{
-		return m_CommentFilePath.get( musicName );
+		String name = "[" + Long.toString( musicLen ) + "]" + musicName;
+
+		return m_CommentFilePath.get( name );
 	}
 
 	public ArrayList < String > getMusicNameList()

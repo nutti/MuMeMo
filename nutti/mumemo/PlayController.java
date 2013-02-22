@@ -286,7 +286,7 @@ public class PlayController extends IComponent implements ActionListener
 		switch( from ){
 			case COM_ID_PLAY_LIST:
 				if( msg.equals( "Double Clicked" ) ){
-					if( options.length == 1 ){
+					if( options.length == 3 ){
 						File file = new File( options[ 0 ] );
 						try{
 							m_Player.open( file );

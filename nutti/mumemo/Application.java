@@ -35,7 +35,7 @@ public class Application
 		m_MsgMediator.addComponent( m_PlayCtrl );
 
 		m_MetaDataHandler = new MetaDataHandler();
-		m_MetaDataHandler.loadMetaDataFile( "meta.dat" );
+		m_MetaDataHandler.loadMetaDataFile( Constant.META_FILE_NAME );
 
 		m_CommFileHandler = new CommentFileHandler();
 
