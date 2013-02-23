@@ -18,10 +18,6 @@ public abstract class IComponent
 		return m_ID;
 	}
 
-	public abstract void procMsg( String msg );
-
-	public abstract void procMsg( String msg, String[] options );
-
 	public abstract void procMsg( ComponentID from, String msg );
 
 	public abstract void procMsg( ComponentID from, String msg, String[] options );

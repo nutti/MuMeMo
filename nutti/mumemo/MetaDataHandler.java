@@ -21,11 +21,13 @@ public class MetaDataHandler
 
 	public MetaDataHandler()
 	{
+		cleanup();
 	}
 
 	// メタデータのロード
 	public void loadMetaDataFile( String fileName )
 	{
+		closeFile();
 		m_FileName = fileName;
 
 		try{
@@ -76,6 +78,10 @@ public class MetaDataHandler
 	// メタデータの追加
 	public void addMetaData( String musicName, long musicLen, String commFilePath )
 	{
+		if( fileClosed() ){
+			return;
+		}
+
 		try{
 			String name = "[" + Long.toString( musicLen ) + "]" + musicName;
 			// 既に同名のエントリが存在する場合は、無視
@@ -110,6 +116,10 @@ public class MetaDataHandler
 
 	public String getCommentFilePath( String musicName, long musicLen )
 	{
+		if( fileClosed() ){
+			return null;
+		}
+
 		String name = "[" + Long.toString( musicLen ) + "]" + musicName;
 
 		return m_CommentFilePath.get( name );
@@ -117,6 +127,10 @@ public class MetaDataHandler
 
 	public ArrayList < String > getMusicNameList()
 	{
+		if( fileClosed() ){
+			return null;
+		}
+
 		ArrayList < String > list = new ArrayList < String > ();
 
 		Iterator < String > it = m_CommentFilePath.keySet().iterator();
@@ -126,6 +140,22 @@ public class MetaDataHandler
 		}
 
 		return list;
+	}
+
+	public void closeFile()
+	{
+		cleanup();
+	}
+
+	private void cleanup()
+	{
+		m_CommentFilePath = new HashMap < String, String > ();
+		m_FileName = "";
+	}
+
+	private boolean fileClosed()
+	{
+		return m_FileName.equals( "" );
 	}
 
 }

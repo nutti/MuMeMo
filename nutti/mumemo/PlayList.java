@@ -18,6 +18,8 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
 
+import javazoom.jlgui.basicplayer.BasicPlayerException;
+
 import nutti.mumemo.Constant.ComponentID;
 
 public class PlayList extends IComponent
@@ -31,12 +33,6 @@ public class PlayList extends IComponent
 
 	private MetaDataHandler			m_MetaDataHandler;
 	private PlayListFileHandler		m_PlayListFileHandler;	// プレイリストファイルハンドラ
-
-	enum MsgID
-	{
-		MSG_ID_PLAY,
-		MSG_ID_STOP,
-	}
 
 	private MouseListener			m_MusicListML = new MouseListener()
 	{
@@ -53,10 +49,9 @@ public class PlayList extends IComponent
 					File file = new File( options[ 0 ] );
 					options[ 1 ] = Long.toString( file.length() );
 					options[ 2 ] = m_PlayListFileHandler.getMusicInfo( index ).m_MusicTitle;
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, Constant.MsgID.MSG_ID_STOP.ordinal(), null );
 					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, ComponentID.COM_ID_COMMENT_WRITER, "Prepare Comment Data", options );
-					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, "Prepared Play Music", options );
-					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, MsgID.MSG_ID_STOP.ordinal(), null );
-					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, MsgID.MSG_ID_PLAY.ordinal(), options );
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, Constant.MsgID.MSG_ID_PLAY.ordinal(), options );
 				}
 			}
 		}
@@ -144,13 +139,6 @@ public class PlayList extends IComponent
 		mainWnd.add( m_PlayList );
 	}
 
-	public void procMsg( String msg )
-	{
-	}
-
-	public void procMsg( String msg, String[] options )
-	{
-	}
 
 	public void procMsg( ComponentID from, String msg )
 	{
@@ -163,10 +151,9 @@ public class PlayList extends IComponent
 					File file = new File( options[ 0 ] );
 					options[ 1 ] = Long.toString( file.length() );
 					options[ 2 ] = m_PlayListFileHandler.getMusicInfo( idx ).m_MusicTitle;
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, Constant.MsgID.MSG_ID_STOP.ordinal(), null );
 					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, ComponentID.COM_ID_COMMENT_WRITER, "Prepare Comment Data", options );
-					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, "Prepared Play Music", options );
-					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, MsgID.MSG_ID_STOP.ordinal(), null );
-					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, MsgID.MSG_ID_PLAY.ordinal(), options );
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, Constant.MsgID.MSG_ID_PLAY.ordinal(), options );
 				}
 				break;
 			default:
@@ -176,5 +163,18 @@ public class PlayList extends IComponent
 
 	public void procMsg( ComponentID from, String msg, String[] options )
 	{
+	}
+
+	public void procMsg( ComponentID from, int msg, String[] options )
+	{
+		switch( from ){
+			case COM_ID_APP_MAIN:
+				if( msg == Constant.MsgID.MSG_ID_APP_TERM.ordinal() ){
+					m_PlayListFileHandler.closeFile();
+				}
+				break;
+			default:
+				break;
+		}
 	}
 }

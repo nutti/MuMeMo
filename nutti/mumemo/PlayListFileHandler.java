@@ -1,6 +1,5 @@
 package nutti.mumemo;
 
-import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -33,12 +32,12 @@ public class PlayListFileHandler
 
 	public PlayListFileHandler()
 	{
-		m_MusicList = new HashMap < String, MusicInfo > ();
-		m_FilePathListArray = new ArrayList < String > ();
+		cleanup();
 	}
 
 	void load( String fileName )
 	{
+		closeFile();
 		m_FileName = fileName;
 
 		// 全エントリの読み込み
@@ -78,6 +77,10 @@ public class PlayListFileHandler
 
 	void addItem( String filePath, String musicTitle, int musicLen, long fileSize, String author, int bitrate )
 	{
+		if( fileClosed() ){
+			return;
+		}
+
 		try{
 			// 既に同名のエントリが存在する場合は、無視
 			if( m_MusicList.get( filePath ) != null ){
@@ -126,17 +129,44 @@ public class PlayListFileHandler
 
 	public int getEntryTotal()
 	{
+		if( fileClosed() ){
+			return -1;
+		}
 		return m_MusicList.size();
 	}
 
 	public PlayListFileHandler.MusicInfo getMusicInfo( int idx )
 	{
+		if( fileClosed() ){
+			return null;
+		}
+
 		return m_MusicList.get( m_FilePathListArray.get( idx ) );
 	}
 
 	public boolean isExist( String filePath )
 	{
+		if( fileClosed() ){
+			return false;
+		}
+
 		return m_MusicList.get( filePath ) != null;
 	}
 
+	public void closeFile()
+	{
+		cleanup();
+	}
+
+	private void cleanup()
+	{
+		m_MusicList = new HashMap < String, MusicInfo > ();
+		m_FilePathListArray = new ArrayList < String > ();
+		m_FileName = "";
+	}
+
+	private boolean fileClosed()
+	{
+		return m_FileName.equals( "" );
+	}
 }

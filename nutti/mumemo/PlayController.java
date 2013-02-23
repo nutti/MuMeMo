@@ -9,12 +9,10 @@ import java.io.File;
 import java.util.Map;
 
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
-import javax.swing.JTextField;
 
 import nutti.mumemo.Constant.ComponentID;
 
@@ -28,6 +26,7 @@ import javazoom.jlgui.basicplayer.BasicPlayerListener;
 public class PlayController extends IComponent implements ActionListener
 {
 
+
 	private static final String PLAY_BUTTON_NAME = "Play";
 	private static final String STOP_BUTTON_NAME = "Stop";
 	private static final String PAUSE_BUTTON_NAME = "Pause";
@@ -38,8 +37,6 @@ public class PlayController extends IComponent implements ActionListener
 	private JButton			m_PlayBtn;				// 再生ボタン
 	private JButton			m_StopBtn;				// 停止ボタン
 	private JButton			m_PauseBtn;				// 一時停止ボタン
-	//private JButton			m_FileSelectBtn;		// ファイル選択ボタン
-	//private JTextField		m_MusicFileName;		// 音楽ファイル名
 
 	private JScrollBar		m_SeekBar;				// スクロールバー
 	private JLabel			m_MusicLengthLbl;		// 音楽ファイルの長さ
@@ -187,18 +184,6 @@ public class PlayController extends IComponent implements ActionListener
 		m_MusicLengthLbl.setBounds( 210, 40, 50, 20 );
 		m_PlayCtrl.add( m_MusicLengthLbl );
 
-		// ファイル選択ボタン作成
-		//m_FileSelectBtn = new JButton( OPEN_BUTTON_NAME );
-		//m_FileSelectBtn.setBounds( 200, 60, BUTTON_WIDTH, BUTTON_HEIGHT );
-		//m_FileSelectBtn.addActionListener( this );
-		//m_FileSelectBtn.setActionCommand( m_FileSelectBtn.getText() );
-		//m_PlayCtrl.add( m_FileSelectBtn );
-
-		// 音楽ファイル名入力欄作成
-		//m_MusicFileName = new JTextField( "C:/Users/N/Desktop/tsr/hello_music_world.mp3" );
-		//m_MusicFileName.setBounds( 10, 60, 180, 20 );
-		//m_PlayCtrl.add( m_MusicFileName );
-
 		// 音楽プレイヤーの作成
 		m_Player = new BasicPlayer();
 		m_Player.addBasicPlayerListener( m_BasicListener );
@@ -220,16 +205,9 @@ public class PlayController extends IComponent implements ActionListener
 			catch( BasicPlayerException e ){
 				e.printStackTrace();
 			}
-			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Stop" );
+			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, Constant.MsgID.MSG_ID_STOP.ordinal(), null );
 		}
 		else if( cmd.equals( PAUSE_BUTTON_NAME ) ){
-			m_MsgMediator.postMsg( "Pause" );
-		}
-	}
-
-	public void procMsg( String msg )
-	{
-		if( msg.equals( "Pause" ) ){
 			try{
 				// 再生状態 -> 一時停止状態
 				if( m_PauseBtn.getText().equals( PAUSE_BUTTON_NAME ) ){
@@ -248,19 +226,19 @@ public class PlayController extends IComponent implements ActionListener
 		}
 	}
 
-	public void procMsg( String msg, String[] options )
-	{
-	}
-
 	public void procMsg( ComponentID from, String msg )
 	{
 	}
 
 	public void procMsg( ComponentID from, String msg, String[] options )
 	{
+	}
+
+	public void procMsg( ComponentID from, int msg, String[] options )
+	{
 		switch( from ){
 			case COM_ID_PLAY_LIST:
-				if( msg.equals( "Prepared Play Music" ) ){
+				if( msg == Constant.MsgID.MSG_ID_PLAY.ordinal() ){
 					if( options.length == 3 ){
 						File file = new File( options[ 0 ] );
 						try{
@@ -273,7 +251,6 @@ public class PlayController extends IComponent implements ActionListener
 					}
 					m_PrevSec = -1;
 				}
-
 				break;
 			default:
 				break;

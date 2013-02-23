@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -15,6 +16,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import javazoom.jlgui.basicplayer.BasicPlayerException;
 
 import nutti.lib.Util;
 import nutti.mumemo.Constant.ComponentID;
@@ -149,25 +152,9 @@ public class CommentWriter extends IComponent implements ActionListener
 		}
 	}
 
-	public void procMsg( String msg )
-	{
-	}
-
-	public void procMsg( String msg, String[] options )
-	{
-	}
 
 	public void procMsg( ComponentID from, String msg )
 	{
-		switch( from ){
-			case COM_ID_PLAY_CONTROLLER:
-				if( msg.equals( "Stop" ) ){
-					m_CommFileHandler.closeFile();
-					cleanupTags();
-				}
-			default:
-				break;
-		}
 	}
 
 	public void procMsg( ComponentID from, String msg, String[] options )
@@ -201,6 +188,20 @@ public class CommentWriter extends IComponent implements ActionListener
 					}
 				}
  				break;
+			default:
+				break;
+		}
+	}
+
+	public void procMsg( ComponentID from, int msg, String[] options )
+	{
+		switch( from ){
+			case COM_ID_PLAY_LIST:
+			case COM_ID_PLAY_CONTROLLER:
+				if( msg == Constant.MsgID.MSG_ID_STOP.ordinal() ){
+					m_CommFileHandler.closeFile();
+					cleanupTags();
+				}
 			default:
 				break;
 		}

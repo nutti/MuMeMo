@@ -23,34 +23,7 @@ public class MessageMediator extends IMessageMediator
 
 	}
 
-	// 全体へメッセージ送信
-	public void postMsg( String msg )
-	{
-		Iterator < ComponentID > it = m_ComponentList.keySet().iterator();
-		while( it.hasNext() ){
-			IComponent comp = m_ComponentList.get( it.next() );
-			comp.procMsg( msg );
-		}
-	}
 
-	// 全体へメッセージ送信（オプション付）
-	public void postMsg( String msg, String[] options )
-	{
-		Iterator < ComponentID > it = m_ComponentList.keySet().iterator();
-		while( it.hasNext() ){
-			IComponent comp = m_ComponentList.get( it.next() );
-			comp.procMsg( msg, options );
-		}
-	}
-
-	// 指定コンポーネントへメッセージ送信
-	public void postMsg( String name, String msg )
-	{
-		IComponent comp = m_ComponentList.get( name );
-		if( comp != null ){
-			comp.procMsg( msg );
-		}
-	}
 
 	public void postMsg( ComponentID from, String msg )
 	{

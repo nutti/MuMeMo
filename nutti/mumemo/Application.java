@@ -1,9 +1,11 @@
 package nutti.mumemo;
 
 import java.awt.Rectangle;
+import java.io.IOException;
 
 import javax.swing.JFrame;
 
+import nutti.lib.MultipleRunChecker;
 import nutti.mumemo.Constant.ComponentID;
 
 
@@ -22,8 +24,12 @@ public class Application
 	private CommentPlayer			m_CommPlayer;		// コメント表示
 	private PlayList				m_PlayList;			// プレイリスト
 
-	public Application()
+	private MultipleRunChecker		m_Checker;			// 多重起動チェッカ
+
+	public Application( MultipleRunChecker checker )
 	{
+		m_Checker = checker;
+
 		m_MainWnd = new JFrame( APP_TITLE );	// タイトルの設定
 		m_MainWnd.setBounds( WIN_BOUND );		// ウィンドウサイズの設定
 		m_MainWnd.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );		// ×ボタンで閉じる
@@ -48,8 +54,6 @@ public class Application
 		m_PlayList = new PlayList( m_MainWnd, m_MsgMediator, m_MetaDataHandler );
 		m_MsgMediator.addComponent( m_PlayList );
 
-		m_MsgMediator.postMsg( ComponentID.COM_ID_APP_MAIN, "App Init" );
-
 		m_MainWnd.setVisible( true );
 
 		// 終了処理を追加
@@ -66,7 +70,15 @@ public class Application
 		public void run()
 		{
 			// アプリケーション全体に終了通知
-			m_MsgMediator.postMsg( "App Exit" );
+			m_CommFileHandler.closeFile();
+			m_MetaDataHandler.closeFile();
+			m_MsgMediator.postMsg( ComponentID.COM_ID_APP_MAIN,  Constant.MsgID.MSG_ID_APP_TERM.ordinal(), null );
+			try{
+				m_Checker.terminate();
+			}
+			catch( IOException e ){
+				e.printStackTrace();
+			}
 		}
 	}
 }

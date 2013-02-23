@@ -11,7 +11,6 @@ import java.util.Map;
 
 import nutti.lib.LibException;
 import nutti.lib.Util;
-import nutti.mumemo.Constant.ComponentID;
 
 public class CommentFileHandler
 {

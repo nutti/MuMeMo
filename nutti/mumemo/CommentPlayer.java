@@ -57,26 +57,9 @@ public class CommentPlayer extends IComponent
 		mainWnd.add( m_CommPlayer );
 	}
 
-	public void procMsg( String msg )
-	{
-
-	}
-
-	public void procMsg( String msg, String[] options )
-	{
-	}
 
 	public void procMsg( ComponentID from, String msg )
 	{
-		switch( from ){
-			case COM_ID_PLAY_CONTROLLER:
-				if( msg.equals( "Stop" ) ){
-					cleanupComments();
-					cleanupTags();
-				}
-			default:
-				break;
-		}
 	}
 
 	public void procMsg( ComponentID from, String msg, String[] options )
@@ -115,17 +98,31 @@ public class CommentPlayer extends IComponent
 				}
 
 				break;
+			case COM_ID_COMMENT_WRITER:
+				if( msg.equals( "Create Tag" ) ){
+					m_TagSelectList.addItem( options[ 0 ] );
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	public void procMsg( ComponentID from, int msg, String[] options )
+	{
+		switch( from ){
 			case COM_ID_PLAY_LIST:
-				if( msg.equals( "Prepared Play Music" ) ){
+			case COM_ID_PLAY_CONTROLLER:
+				if( msg == Constant.MsgID.MSG_ID_PLAY.ordinal() ){
 					// タグ情報の読み込み
 					for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
 						m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
 					}
 				}
-			case COM_ID_COMMENT_WRITER:
-				if( msg.equals( "Create Tag" ) ){
-					m_TagSelectList.addItem( options[ 0 ] );
+				else if( msg == Constant.MsgID.MSG_ID_STOP.ordinal() ){
+					cleanupTags();
 				}
+				break;
 			default:
 				break;
 		}

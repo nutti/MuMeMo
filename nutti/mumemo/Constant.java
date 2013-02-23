@@ -12,6 +12,14 @@ public class Constant
 		COM_ID_TOTAL
 	}
 
+	public enum MsgID
+	{
+		MSG_ID_PLAY,
+		MSG_ID_STOP,
+		MSG_ID_APP_INIT,
+		MSG_ID_APP_TERM,
+	}
+
 	public static final String COMMENT_FILE_SUFFIX		= ".comm";
 	public static final String DATA_FILE_DIR			= "dat";
 	public static final String COMMENT_FILE_DIR			= DATA_FILE_DIR  + "/comment";
