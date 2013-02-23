@@ -1,6 +1,10 @@
 package nutti.mumemo;
 
 import java.awt.Color;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +25,8 @@ public class CommentPlayer extends IComponent
 	private DefaultListModel		m_DefListModel;					// JList項目追加用
 
 	private CommentFileHandler		m_CommFileHandler;				// コメントファイルハンドラ
+
+
 
 	public CommentPlayer( JFrame mainWnd, IMessageMediator mediator, CommentFileHandler comm )
 	{
@@ -53,20 +59,24 @@ public class CommentPlayer extends IComponent
 
 	public void procMsg( String msg )
 	{
+
 	}
 
 	public void procMsg( String msg, String[] options )
 	{
-	//	if( msg.equals( "Play" ) ){
-	//		// タグ情報の読み込み
-	//		for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
-	//			m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
-	//		}
-	//	}
 	}
 
 	public void procMsg( ComponentID from, String msg )
 	{
+		switch( from ){
+			case COM_ID_PLAY_CONTROLLER:
+				if( msg.equals( "Stop" ) ){
+					cleanupComments();
+					cleanupTags();
+				}
+			default:
+				break;
+		}
 	}
 
 	public void procMsg( ComponentID from, String msg, String[] options )
@@ -80,7 +90,8 @@ public class CommentPlayer extends IComponent
 					for( int i = 0; i < m_DefListModel.getSize(); ++i ){
 						Matcher matcher = pattern.matcher( (String) m_DefListModel.getElementAt( i ) );
 						if( matcher.find() ){
-							int pos = Integer.parseInt( matcher.group( 1 ) );
+							String[] elms = matcher.group( 1 ).split( ":" );
+							int pos = Integer.parseInt( elms[ 0 ] ) * 60 + Integer.parseInt( elms[ 1 ] );
 							if( curSecond - pos > 2 ){
 								m_DefListModel.remove( i );
 								m_CommList.ensureIndexIsVisible( m_DefListModel.getSize() - 1 );
@@ -91,25 +102,45 @@ public class CommentPlayer extends IComponent
 					String comment;
 					for( int i = 0; i < m_CommFileHandler.getCommentEntriesTotal( curSecond ); ++i ){
 						if( m_CommFileHandler.commentReleatedTag( curSecond, i, m_TagSelectList.getSelectedIndex() - 1 ) ){
-							comment = "[" + Integer.toString( curSecond ) + "] ";
-							comment = comment + Long.toString( m_CommFileHandler.getCommentedDate( curSecond, i ) ) + " ";
-							comment = comment + "(" + m_CommFileHandler.getCommentAuthor( curSecond, i ) + ") ";
+							comment = "[" + Integer.toString( (int)( curSecond / 60 ) ) + ":" + Integer.toString( curSecond % 60 ) + "] ";
+							SimpleDateFormat fmt = new SimpleDateFormat( "yyyy.MM.dd HH:mm:ss" );
+							String str = fmt.format( new Date( m_CommFileHandler.getCommentedDate( curSecond, i ) ) );
+							comment = comment + str + " ";
+							comment = comment + "(" + m_CommFileHandler.getCommentAuthor( curSecond, i ) + ")\n";
 							comment = comment + m_CommFileHandler.getComment( curSecond, i );
 							m_DefListModel.addElement( comment );
 							m_CommList.ensureIndexIsVisible( m_DefListModel.getSize() - 1 );
 						}
 					}
 				}
+
 				break;
 			case COM_ID_PLAY_LIST:
-				if( msg.equals( "Double Clicked" ) ){
+				if( msg.equals( "Prepared Play Music" ) ){
 					// タグ情報の読み込み
 					for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
 						m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
 					}
 				}
+			case COM_ID_COMMENT_WRITER:
+				if( msg.equals( "Create Tag" ) ){
+					m_TagSelectList.addItem( options[ 0 ] );
+				}
 			default:
 				break;
 		}
+	}
+
+	private void cleanupTags()
+	{
+		m_TagSelectList.removeAllItems();
+		m_TagSelectList.addItem( "Select Tags" );
+	}
+
+	// コメント全消去
+	private void cleanupComments()
+	{
+		m_DefListModel.clear();
+		m_CommList.ensureIndexIsVisible( m_DefListModel.getSize() - 1 );
 	}
 }

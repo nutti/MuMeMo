@@ -26,4 +26,8 @@ public abstract class IComponent
 
 	public abstract void procMsg( ComponentID from, String msg, String[] options );
 
+	public void procMsg( ComponentID from, int msg, String[] options )
+	{
+	}
+
 }

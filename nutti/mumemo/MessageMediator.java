@@ -85,4 +85,13 @@ public class MessageMediator extends IMessageMediator
 			comp.procMsg( from, msg, options );
 		}
 	}
+
+	public void postMsg( ComponentID from, int msg, String[] options )
+	{
+		Iterator < ComponentID > it = m_ComponentList.keySet().iterator();
+		while( it.hasNext() ){
+			IComponent comp = m_ComponentList.get( it.next() );
+			comp.procMsg( from, msg, options );
+		}
+	}
 }

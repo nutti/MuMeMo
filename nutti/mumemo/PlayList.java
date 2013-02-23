@@ -32,6 +32,12 @@ public class PlayList extends IComponent
 	private MetaDataHandler			m_MetaDataHandler;
 	private PlayListFileHandler		m_PlayListFileHandler;	// プレイリストファイルハンドラ
 
+	enum MsgID
+	{
+		MSG_ID_PLAY,
+		MSG_ID_STOP,
+	}
+
 	private MouseListener			m_MusicListML = new MouseListener()
 	{
 		public void mouseClicked( MouseEvent event )
@@ -43,13 +49,14 @@ public class PlayList extends IComponent
 				}
 				if( index >= 0 ){
 					String[] options = new String[ 3 ];
-					//options[ 0 ] = (String) m_DefListModel.getElementAt( index );
 					options[ 0 ] = m_PlayListFileHandler.getMusicInfo( index ).m_FilePath;
 					File file = new File( options[ 0 ] );
 					options[ 1 ] = Long.toString( file.length() );
 					options[ 2 ] = m_PlayListFileHandler.getMusicInfo( index ).m_MusicTitle;
 					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, ComponentID.COM_ID_COMMENT_WRITER, "Prepare Comment Data", options );
-					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, "Double Clicked", options );
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, "Prepared Play Music", options );
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, MsgID.MSG_ID_STOP.ordinal(), null );
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, MsgID.MSG_ID_PLAY.ordinal(), options );
 				}
 			}
 		}
@@ -148,15 +155,19 @@ public class PlayList extends IComponent
 	public void procMsg( ComponentID from, String msg )
 	{
 		switch( from ){
-			case COM_ID_APP_MAIN:
-				//if( msg.equals( "App Init" ) ){
-				//	ArrayList < String > list = m_MetaDataHandler.getMusicNameList();
-				//	for( String s : list ){
-				//		m_DefListModel.addElement( s );
-				//		m_MusicList.ensureIndexIsVisible( m_DefListModel.size() - 1 );
-				//	}
-				//}
-
+			case COM_ID_PLAY_CONTROLLER:
+				if( msg.equals( "Play Button Pushed" ) ){
+					int idx = m_MusicList.getSelectedIndex();
+					String[] options = new String[ 3 ];
+					options[ 0 ] = m_PlayListFileHandler.getMusicInfo( idx ).m_FilePath;
+					File file = new File( options[ 0 ] );
+					options[ 1 ] = Long.toString( file.length() );
+					options[ 2 ] = m_PlayListFileHandler.getMusicInfo( idx ).m_MusicTitle;
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, ComponentID.COM_ID_COMMENT_WRITER, "Prepare Comment Data", options );
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, "Prepared Play Music", options );
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, MsgID.MSG_ID_STOP.ordinal(), null );
+					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, MsgID.MSG_ID_PLAY.ordinal(), options );
+				}
 				break;
 			default:
 				break;

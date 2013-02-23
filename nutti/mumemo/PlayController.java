@@ -31,7 +31,6 @@ public class PlayController extends IComponent implements ActionListener
 	private static final String PLAY_BUTTON_NAME = "Play";
 	private static final String STOP_BUTTON_NAME = "Stop";
 	private static final String PAUSE_BUTTON_NAME = "Pause";
-	private static final String OPEN_BUTTON_NAME = "Open";
 
 	private static final long serialVersionUID = 1L;
 
@@ -39,8 +38,8 @@ public class PlayController extends IComponent implements ActionListener
 	private JButton			m_PlayBtn;				// 再生ボタン
 	private JButton			m_StopBtn;				// 停止ボタン
 	private JButton			m_PauseBtn;				// 一時停止ボタン
-	private JButton			m_FileSelectBtn;		// ファイル選択ボタン
-	private JTextField		m_MusicFileName;		// 音楽ファイル名
+	//private JButton			m_FileSelectBtn;		// ファイル選択ボタン
+	//private JTextField		m_MusicFileName;		// 音楽ファイル名
 
 	private JScrollBar		m_SeekBar;				// スクロールバー
 	private JLabel			m_MusicLengthLbl;		// 音楽ファイルの長さ
@@ -189,16 +188,16 @@ public class PlayController extends IComponent implements ActionListener
 		m_PlayCtrl.add( m_MusicLengthLbl );
 
 		// ファイル選択ボタン作成
-		m_FileSelectBtn = new JButton( OPEN_BUTTON_NAME );
-		m_FileSelectBtn.setBounds( 200, 60, BUTTON_WIDTH, BUTTON_HEIGHT );
-		m_FileSelectBtn.addActionListener( this );
-		m_FileSelectBtn.setActionCommand( m_FileSelectBtn.getText() );
-		m_PlayCtrl.add( m_FileSelectBtn );
+		//m_FileSelectBtn = new JButton( OPEN_BUTTON_NAME );
+		//m_FileSelectBtn.setBounds( 200, 60, BUTTON_WIDTH, BUTTON_HEIGHT );
+		//m_FileSelectBtn.addActionListener( this );
+		//m_FileSelectBtn.setActionCommand( m_FileSelectBtn.getText() );
+		//m_PlayCtrl.add( m_FileSelectBtn );
 
 		// 音楽ファイル名入力欄作成
-		m_MusicFileName = new JTextField( "C:/Users/N/Desktop/tsr/hello_music_world.mp3" );
-		m_MusicFileName.setBounds( 10, 60, 180, 20 );
-		m_PlayCtrl.add( m_MusicFileName );
+		//m_MusicFileName = new JTextField( "C:/Users/N/Desktop/tsr/hello_music_world.mp3" );
+		//m_MusicFileName.setBounds( 10, 60, 180, 20 );
+		//m_PlayCtrl.add( m_MusicFileName );
 
 		// 音楽プレイヤーの作成
 		m_Player = new BasicPlayer();
@@ -212,16 +211,16 @@ public class PlayController extends IComponent implements ActionListener
 		String cmd = event.getActionCommand();
 
 		if( cmd.equals( PLAY_BUTTON_NAME ) ){
-			String[] options = new String[ 1 ];
-			options[ 0 ] = m_MusicFileName.getText();
-			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Play Button Pushed", options );
-			//m_MsgMediator.postMsg( "Play", options );
+			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Play Button Pushed" );
 		}
-		else if( cmd.equals( STOP_BUTTON_NAME ) ){
+		if( cmd.equals( STOP_BUTTON_NAME ) ){
+			try{
+				m_Player.stop();
+			}
+			catch( BasicPlayerException e ){
+				e.printStackTrace();
+			}
 			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Stop" );
-		}
-		else if( cmd.equals( OPEN_BUTTON_NAME ) ){
-			m_MsgMediator.postMsg( "Open" );
 		}
 		else if( cmd.equals( PAUSE_BUTTON_NAME ) ){
 			m_MsgMediator.postMsg( "Pause" );
@@ -230,17 +229,7 @@ public class PlayController extends IComponent implements ActionListener
 
 	public void procMsg( String msg )
 	{
-		if( msg.equals( "Open" ) ){
-			JFileChooser chooser = new JFileChooser();
-
-			int selected = chooser.showOpenDialog( m_PlayCtrl );
-			if( selected == JFileChooser.APPROVE_OPTION ){
-				File file = chooser.getSelectedFile();
-				String filePath = chooser.getCurrentDirectory() + "/" + file.getName();
-				m_MusicFileName.setText( filePath.replaceAll( "\\\\", "/" ) );
-			}
-		}
-		else if( msg.equals( "Pause" ) ){
+		if( msg.equals( "Pause" ) ){
 			try{
 				// 再生状態 -> 一時停止状態
 				if( m_PauseBtn.getText().equals( PAUSE_BUTTON_NAME ) ){
@@ -265,27 +254,13 @@ public class PlayController extends IComponent implements ActionListener
 
 	public void procMsg( ComponentID from, String msg )
 	{
-		switch( from ){
-			case COM_ID_PLAY_CONTROLLER:
-				if( msg.equals( "Stop" ) ){
-					try{
-						m_Player.stop();
-					}
-					catch( BasicPlayerException e ){
-						e.printStackTrace();
-					}
-				}
-				break;
-			default:
-				break;
-		}
 	}
 
 	public void procMsg( ComponentID from, String msg, String[] options )
 	{
 		switch( from ){
 			case COM_ID_PLAY_LIST:
-				if( msg.equals( "Double Clicked" ) ){
+				if( msg.equals( "Prepared Play Music" ) ){
 					if( options.length == 3 ){
 						File file = new File( options[ 0 ] );
 						try{

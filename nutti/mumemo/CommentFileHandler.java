@@ -47,25 +47,27 @@ public class CommentFileHandler
 
 	FileFormat				m_Format;
 	String					m_FileName;
+	boolean					m_NeedUpdate;				// ファイルの更新が必要か？
 
 	public CommentFileHandler()
 	{
-		m_Format = new FileFormat();
-		m_Format.m_Header = new Header();
-		m_Format.m_Tags = new ArrayList < Tag > ();
-		m_Format.m_Entries = new HashMap < Integer, ArrayList < Entry > > ();
+		cleanup();
 	}
 
 	public void createFile( String fileName )
 	{
+		cleanup();
 		m_FileName = fileName;
-
 		saveFile();
 	}
 
 	public void saveFile()
 	{
 		try {
+			if( fileClosed() || !m_NeedUpdate ){
+				return;
+			}
+
 			FileOutputStream out = new FileOutputStream( m_FileName );
 
 			// ヘッダの保存
@@ -99,6 +101,10 @@ public class CommentFileHandler
 				}
 			}
 
+			out.close();
+
+			m_NeedUpdate = false;
+
 		}
 		catch( FileNotFoundException e ){
 			e.printStackTrace();
@@ -114,6 +120,7 @@ public class CommentFileHandler
 
 	public void loadFile( String fileName )
 	{
+		cleanup();
 		m_FileName = fileName;
 
 		FileInputStream in;
@@ -157,6 +164,8 @@ public class CommentFileHandler
 				}
 				m_Format.m_Entries.put( entryPos, entryList );
 			}
+
+			in.close();
 		}
 		catch( FileNotFoundException e ){
 			e.printStackTrace();
@@ -176,11 +185,17 @@ public class CommentFileHandler
 
 	public void addTag( String tagName )
 	{
+		if( fileClosed() ){
+			return;
+		}
+
 		try{
 			Tag tag = new Tag();
 			tag.m_TagName = tagName;
 			tag.m_TagNameBytes = Util.getStringUTF8Byte( tagName );
 			m_Format.m_Tags.add( tag );
+
+			m_NeedUpdate = true;
 		}
 		catch( UnsupportedEncodingException e ){
 			e.printStackTrace();
@@ -189,6 +204,10 @@ public class CommentFileHandler
 
 	public void addComment( int musicPos, long date, String author, String comment, ArrayList < Integer > tagList )
 	{
+		if( fileClosed() ){
+			return;
+		}
+
 		try{
 			Entry entry = new Entry();
 			entry.m_Date = date;
@@ -207,6 +226,8 @@ public class CommentFileHandler
 			else{
 				m_Format.m_Entries.get( musicPos ).add( entry );
 			}
+
+			m_NeedUpdate = true;
 		}
 		catch( UnsupportedEncodingException e ){
 			e.printStackTrace();
@@ -215,10 +236,16 @@ public class CommentFileHandler
 
 	public void buildHeader( String musicName, int musicLen )
 	{
+		if( fileClosed() ){
+			return;
+		}
+
 		try{
 			m_Format.m_Header.m_MusicNameBytes = Util.getStringUTF8Byte( musicName );
 			m_Format.m_Header.m_MusicName = musicName;
 			m_Format.m_Header.m_MusicLen = musicLen;
+
+			m_NeedUpdate = true;
 		}
 		catch( UnsupportedEncodingException e ){
 			e.printStackTrace();
@@ -283,5 +310,26 @@ public class CommentFileHandler
 		}
 
 		return false;
+	}
+
+	public void closeFile()
+	{
+		saveFile();
+		cleanup();
+	}
+
+	private void cleanup()
+	{
+		m_Format = new FileFormat();
+		m_Format.m_Header = new Header();
+		m_Format.m_Tags = new ArrayList < Tag > ();
+		m_Format.m_Entries = new HashMap < Integer, ArrayList < Entry > > ();
+		m_FileName = "";
+		m_NeedUpdate = false;
+	}
+
+	private boolean fileClosed()
+	{
+		return m_FileName.equals( "" );
 	}
 }

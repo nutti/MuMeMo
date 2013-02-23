@@ -6,6 +6,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -117,22 +119,38 @@ public class CommentWriter extends IComponent implements ActionListener
 		String cmd = event.getActionCommand();
 
 		if( cmd.equals( COMMENT_BUTTON_NAME ) ){
-			String options[] = new String [ 1 ];
-			options[ 0 ] = m_CommInputArea.getText();
-			m_MsgMediator.postMsg( ComponentID.COM_ID_COMMENT_WRITER, "Comment", options );
+			// タグが選択されていない場合は無視
+			if( m_TagSelectList.getSelectedIndex() != 0 ){
+				String options[] = new String [ 1 ];
+				options[ 0 ] = m_CommInputArea.getText();
+				ArrayList < Integer > tagList = new ArrayList < Integer > ();
+				tagList.add( m_TagSelectList.getSelectedIndex() - 1 );
+				// コメントファイルにコメント追加
+				Date date = new Date();
+				m_CommFileHandler.addComment( m_PlayTime, date.getTime(), "nutti", options[ 0 ], tagList );
+				// コメント欄消去
+				m_CommInputArea.setText( "" );
+				// メッセージ送信
+				m_MsgMediator.postMsg( ComponentID.COM_ID_COMMENT_WRITER, "Create Comment", options );
+			}
 		}
 		else if( cmd.equals( CREATE_TAG_BUTTON_NAME ) ){
+			// ※バグ、音楽再生していない時は追加できないようにする。
 			String options[] = new String [ 1 ];
 			options[ 0 ] = m_NewTagNameInputArea.getText();
+			// タグが存在しない場合、追加
+			if( !m_CommFileHandler.tagExist( options[ 0 ] ) ){
+				m_CommFileHandler.addTag( options[ 0 ] );
+				m_TagSelectList.addItem( options[ 0 ] );
+				m_NewTagNameInputArea.setText( "" );
+			}
+			// メッセージ送信
 			m_MsgMediator.postMsg( ComponentID.COM_ID_COMMENT_WRITER, "Create Tag", options );
 		}
 	}
 
 	public void procMsg( String msg )
 	{
-	//	if( msg.equals( "App Init" ) ){
-	//		m_MetaDataHandler.loadMetaDataFile( "meta.dat" );
-	//	}
 	}
 
 	public void procMsg( String msg, String[] options )
@@ -144,7 +162,8 @@ public class CommentWriter extends IComponent implements ActionListener
 		switch( from ){
 			case COM_ID_PLAY_CONTROLLER:
 				if( msg.equals( "Stop" ) ){
-					m_CommFileHandler.saveFile();
+					m_CommFileHandler.closeFile();
+					cleanupTags();
 				}
 			default:
 				break;
@@ -153,50 +172,9 @@ public class CommentWriter extends IComponent implements ActionListener
 
 	public void procMsg( ComponentID from, String msg, String[] options )
 	{
-
-
 		switch( from ){
-			case COM_ID_COMMENT_WRITER:
-				if( msg.equals( "Comment" ) ){
-					ArrayList < Integer > tagList = new ArrayList < Integer > ();
-					tagList.add( m_TagSelectList.getSelectedIndex() - 1 );
-					m_CommFileHandler.addComment( m_PlayTime, System.currentTimeMillis(), "nutti", options[ 0 ], tagList );
-					m_CommInputArea.setText( "" );
-				}
-				else if( msg.equals( "Create Tag" ) ){
-					if( m_CommFileHandler.tagExist( options[ 0 ] ) ){
-						m_CommFileHandler.addTag( options[ 0 ] );
-						m_TagSelectList.addItem( options[ 0 ] );
-						m_NewTagNameInputArea.setText( "" );
-					}
-				}
-				break;
  			case COM_ID_PLAY_CONTROLLER:
-/*				if( msg.equals( "Play" ) ){
-					String[] elms = options[ 0 ].split( "/" );
-					String fileName = elms[ elms.length - 1 ];
-					String filePath = Constant.COMMENT_FILE_DIR  + "/" + fileName + Constant.COMMENT_FILE_SUFFIX;
-					// メタデータ
-					if( m_MetaDataHandler.getCommentFilePath( fileName ) == null ){
-						m_MetaDataHandler.addMetaData( fileName, filePath );
-					}
-					// コメントデータ
-					if( Util.fileExist( filePath ) ){
-						m_CommFileHandler.loadFile( filePath );
-					}
-					else{
-						m_CommFileHandler.buildHeader( fileName, 0 );
-						m_CommFileHandler.createFile( filePath );
-					}
-					// タグ情報の読み込み
-					for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
-						m_TagSelectList.addItem( m_CommFileHandler.getTagName( i ) );
-					}
-				}
-				else */if( msg.equals( "Stop" ) ){
-					m_CommFileHandler.saveFile();
-				}
-				else if( msg.equals( "Update Time" ) ){
+ 				if( msg.equals( "Update Time" ) ){
 					m_PlayTime = Integer.parseInt( options[ 0 ] );
 				}
  			case COM_ID_PLAY_LIST:
@@ -226,6 +204,12 @@ public class CommentWriter extends IComponent implements ActionListener
 			default:
 				break;
 		}
+	}
+
+	private void cleanupTags()
+	{
+		m_TagSelectList.removeAllItems();
+		m_TagSelectList.addItem( "Select Tags" );
 	}
 
 }
