@@ -6,13 +6,14 @@ import java.io.IOException;
 import javax.swing.JFrame;
 
 import nutti.lib.MultipleRunChecker;
+import nutti.lib.Util;
 import nutti.mumemo.Constant.ComponentID;
 
 
 public class Application
 {
 	private static final String APP_TITLE = "Music Memo";			// アプリケーションのタイトル
-	private static final Rectangle WIN_BOUND = new Rectangle( 100, 100, 400, 400 );			// ウィンドウサイズ
+	private static final Rectangle WIN_BOUND = new Rectangle( 100, 100, 620, 500 );			// ウィンドウサイズ
 
 	private JFrame		m_MainWnd;		// メインウィンドウ
 
@@ -29,6 +30,16 @@ public class Application
 	public Application( MultipleRunChecker checker )
 	{
 		m_Checker = checker;
+
+		setupDirectories();
+		if( !validateFileStructure() ){
+			try{
+				m_Checker.terminate();
+			}catch( IOException e ){
+				e.printStackTrace();
+			}
+			return;
+		}
 
 		m_MainWnd = new JFrame( APP_TITLE );	// タイトルの設定
 		m_MainWnd.setBounds( WIN_BOUND );		// ウィンドウサイズの設定
@@ -62,6 +73,42 @@ public class Application
 
 	public void run()
 	{
+	}
+
+	// ディレクトリのセットアップ
+	private void setupDirectories()
+	{
+		// musicディレクトリ
+		if( !Util.fileExist( Constant.MUSIC_FILE_DIR ) ){
+			Util.mkdir( Constant.MUSIC_FILE_DIR );
+		}
+		// datディレクトリ
+		if( !Util.fileExist( Constant.DATA_FILE_DIR ) ){
+			Util.mkdir( Constant.DATA_FILE_DIR );
+		}
+		// dat/commentディレクトリ
+		if( !Util.fileExist( Constant.COMMENT_FILE_DIR ) ){
+			Util.mkdir( Constant.COMMENT_FILE_DIR );
+		}
+	}
+
+	// ファイル構成の正当性を確認
+	private boolean validateFileStructure()
+	{
+		// musicディレクトリ
+		if( !Util.isDirectory( Constant.MUSIC_FILE_DIR ) ){
+			return false;
+		}
+		// datディレクトリ
+		if( !Util.isDirectory( Constant.DATA_FILE_DIR ) ){
+			return false;
+		}
+		// dat/commentディレクトリ
+		if( !Util.isDirectory( Constant.COMMENT_FILE_DIR ) ){
+			return false;
+		}
+
+		return true;
 	}
 
 	// 終了処理

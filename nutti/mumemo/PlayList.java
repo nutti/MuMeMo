@@ -17,6 +17,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import javazoom.jlgui.basicplayer.BasicPlayerException;
 
@@ -25,9 +26,10 @@ import nutti.mumemo.Constant.ComponentID;
 public class PlayList extends IComponent
 {
 
-	private JPanel					m_PlayList;			// プレイリスト
-	private JList					m_MusicList;		// 音楽リスト
-	private DefaultListModel		m_DefListModel;		// JList項目追加用
+	private JPanel					m_PlayList;				// プレイリスト
+	private JList					m_MusicList;			// 音楽リスト
+	private DefaultListModel		m_DefListModel;			// JList項目追加用
+	private JScrollPane				m_MusicListScrollBar;	// スクロールバー
 
 	private DropTarget				m_DropTarget;		// ドラック＆ドロップ
 
@@ -113,17 +115,19 @@ public class PlayList extends IComponent
 
 		// プレイリスト領域
 		m_PlayList = new JPanel();
-		m_PlayList.setBounds( 10, 100, 400, 200 );
+		m_PlayList.setBounds( 10, 90, 370, 200 );
 		m_PlayList.setBackground( Color.YELLOW );
 		m_PlayList.setLayout( null );
 
 		// 音楽一覧
 		m_DefListModel = new DefaultListModel();
 		m_MusicList = new JList( m_DefListModel );
-		m_MusicList.setBounds( 10, 10, 400, 100 );
+		m_MusicListScrollBar = new JScrollPane( m_MusicList );
+		m_MusicListScrollBar.setBounds( 10, 10, 350, 180 );
+		m_MusicList.setBounds( 10, 10, 350, 180 );
 		m_MusicList.setBackground( Color.WHITE );
 		m_MusicList.addMouseListener( m_MusicListML );
-		m_PlayList.add( m_MusicList );
+		m_PlayList.add( m_MusicListScrollBar );
 
 		m_DropTarget = new DropTarget( m_MusicList, m_FileDropEvent );
 

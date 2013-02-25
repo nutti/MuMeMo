@@ -80,5 +80,18 @@ public class Util
 		return file.exists();
 	}
 
+	public static boolean isDirectory( String fileName )
+	{
+		File file = new File( fileName );
+
+		return file.isDirectory();
+	}
+
+	public static void mkdir( String fileName )
+	{
+		File file = new File( fileName );
+
+		file.mkdir();
+	}
 
 }

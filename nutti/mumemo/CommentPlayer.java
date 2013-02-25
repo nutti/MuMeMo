@@ -36,7 +36,7 @@ public class CommentPlayer extends IComponent
 
 		// コメントライター領域
 		m_CommPlayer = new JPanel();
-		m_CommPlayer.setBounds( 10, 160, 250, 200 );
+		m_CommPlayer.setBounds( 10, 300, 580, 150 );
 		m_CommPlayer.setBackground( Color.CYAN );
 		m_CommPlayer.setLayout( null );
 
@@ -49,7 +49,7 @@ public class CommentPlayer extends IComponent
 		// コメント一覧
 		m_DefListModel = new DefaultListModel();
 		m_CommList = new JList( m_DefListModel );
-		m_CommList.setBounds( 10, 50, 230, 100 );
+		m_CommList.setBounds( 10, 40, 560, 100 );
 		m_CommList.setBackground( Color.WHITE );
 		m_CommPlayer.add( m_CommList );
 

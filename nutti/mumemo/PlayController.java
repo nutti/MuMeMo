@@ -25,11 +25,18 @@ import javazoom.jlgui.basicplayer.BasicPlayerListener;
 
 public class PlayController extends IComponent implements ActionListener
 {
-
+	enum PlayMode
+	{
+		PLAY_MODE_ONCE,
+		PLAY_MODE_REPEAT,
+		PLAY_MODE_TOTAL,
+	}
 
 	private static final String PLAY_BUTTON_NAME = "Play";
 	private static final String STOP_BUTTON_NAME = "Stop";
 	private static final String PAUSE_BUTTON_NAME = "Pause";
+
+	private static final String[] PLAY_MODE_BUTTON_NAME = { "Once", "Replay", "Play Mode" };
 
 	private static final long serialVersionUID = 1L;
 
@@ -37,9 +44,11 @@ public class PlayController extends IComponent implements ActionListener
 	private JButton			m_PlayBtn;				// 再生ボタン
 	private JButton			m_StopBtn;				// 停止ボタン
 	private JButton			m_PauseBtn;				// 一時停止ボタン
+	private JButton			m_PlayModeBtn;			// 再生モードボタン
 
-	private JScrollBar		m_SeekBar;				// スクロールバー
-	private JLabel			m_MusicLengthLbl;		// 音楽ファイルの長さ
+	private JScrollBar		m_SeekBar;				// シークバー
+	private JScrollBar		m_VolumeAdjBar;			// 音量調整バー
+	private JScrollBar		m_PanAdjBar;			// パン調整バー
 	private JLabel			m_PlayTimeLbl;			// 再生時間
 
 	private BasicPlayer		m_Player;				// Basic Player
@@ -67,25 +76,24 @@ public class PlayController extends IComponent implements ActionListener
 			String type = m_AudioInfo.get( "audio.type" ).toString();
 			long bitrate = Long.parseLong( m_AudioInfo.get( "mp3.bitrate.nominal.bps" ).toString() );	// ビットレート
 
-			int totalSecond = ( int ) ( length / ( bitrate / 8 ) );						// 音楽総再生時間
+			long totalSecond = length / ( bitrate / 8 );						// 音楽総再生時間
 
 			// 再生時間を秒単位で取得
 			// 読み込んだバイト数 * 音楽の長さ / 音楽のバイト総数
-			int curSecond = ( int ) ( bytesread * totalSecond / length );
+			int curSecond = (int) ( bytesread * totalSecond / length );
 
 			// シークバーの位置を更新しなくてはならない場合
 			if( curSeekPos != m_SeekBar.getValue() && !m_SeekBar.getValueIsAdjusting() ){
 				m_SeekBar.removeAdjustmentListener( m_AdjListener );
 
 				// 音楽の長さを取得
-				int dispTotMin = totalSecond / 60;
-				int dispTotSec = totalSecond % 60;
+				int dispTotMin = (int) ( totalSecond / 60 );
+				int dispTotSec = (int) ( totalSecond % 60 );
 				int dispCurMin = curSecond / 60;
 				int dispCurSec = curSecond % 60;
 
 				m_SeekBar.setValue( curSeekPos );
-				m_MusicLengthLbl.setText( String.format( "%1$d:%2$02d", dispTotMin, dispTotSec ) );
-				m_PlayTimeLbl.setText( String.format( "%1$d:%2$02d", dispCurMin, dispCurSec ) );
+				m_PlayTimeLbl.setText( String.format( "%1$02d:%2$02d / %3$02d:%4$02d", dispCurMin, dispCurSec, dispTotMin, dispTotSec ) );
 				m_SeekBar.addAdjustmentListener( m_AdjListener );
 
 			}
@@ -96,6 +104,18 @@ public class PlayController extends IComponent implements ActionListener
 				m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Update Time", options );
 				m_PrevSec = curSecond;
 			}
+
+			// 連続再生用チェック
+			if( m_Player.getStatus() == BasicPlayer.STOPPED ){
+				if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
+					try{
+						m_Player.play();
+					}
+					catch( BasicPlayerException e ){
+						e.printStackTrace();
+					}
+				}
+			}
 		}
 		public void setController( BasicController controller )
 		{
@@ -104,20 +124,45 @@ public class PlayController extends IComponent implements ActionListener
 
 	private AdjustmentListener		m_AdjListener = new AdjustmentListener()
 	{
-		public void adjustmentValueChanged( AdjustmentEvent event ){
-			if( !m_SeekBar.getValueIsAdjusting() ){
-				try{
-					// 音楽全体の長さを取得
-					long bytes = Long.parseLong( m_AudioInfo.get( "audio.length.bytes" ).toString() );
-					// シークバーの位置から、再生位置を取得
-					long seek = bytes * m_SeekBar.getValue() / m_SeekBar.getMaximum();
-					// シーク
-					m_Player.removeBasicPlayerListener( m_BasicListener );
-					m_Player.seek( seek );
-					m_Player.addBasicPlayerListener( m_BasicListener );
+		public void adjustmentValueChanged( AdjustmentEvent event )
+		{
+			if( event.getSource().equals( m_SeekBar ) ){
+				if( !m_SeekBar.getValueIsAdjusting() ){
+					try{
+						// 音楽全体の長さを取得
+						long bytes = Long.parseLong( m_AudioInfo.get( "audio.length.bytes" ).toString() );
+						// シークバーの位置から、再生位置を取得
+						long seek = bytes * m_SeekBar.getValue() / m_SeekBar.getMaximum();
+						// シーク
+						m_Player.removeBasicPlayerListener( m_BasicListener );
+						m_Player.seek( seek );
+						m_Player.addBasicPlayerListener( m_BasicListener );
+					}
+					catch( BasicPlayerException e ){
+						e.printStackTrace();
+					}
 				}
-				catch( BasicPlayerException e ){
-					e.printStackTrace();
+			}
+			else if( event.getSource().equals( m_VolumeAdjBar ) ){
+				if( !m_VolumeAdjBar.getValueIsAdjusting() ){
+					double volume = 1.0 * m_VolumeAdjBar.getValue() / m_VolumeAdjBar.getMaximum();
+					try {
+						m_Player.setGain( volume );
+					}
+					catch( BasicPlayerException e ){
+						e.printStackTrace();
+					}
+				}
+			}
+			else if( event.getSource().equals( m_PanAdjBar ) ){
+				if( !m_PanAdjBar.getValueIsAdjusting() ){
+					double pan = -1.0 + 2.0 * m_PanAdjBar.getValue() / m_PanAdjBar.getMaximum();
+					try {
+						m_Player.setPan( pan );
+					}
+					catch( BasicPlayerException e ){
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -132,7 +177,7 @@ public class PlayController extends IComponent implements ActionListener
 		m_PrevSec = -1;
 
 		m_PlayCtrl = new JPanel();
-		m_PlayCtrl.setBounds( 10, 10, 300, 100 );
+		m_PlayCtrl.setBounds( 10, 10, 370, 70 );
 		m_PlayCtrl.setBackground( Color.BLACK );
 		m_PlayCtrl.setLayout( null );
 
@@ -168,25 +213,49 @@ public class PlayController extends IComponent implements ActionListener
 		m_PauseBtn.setActionCommand( m_PauseBtn.getText() );
 		m_PlayCtrl.add( m_PauseBtn );
 
+		posX += BUTTON_WIDTH + BUTTON_OFFSET_X;
+
+		// 再生モード作成
+		m_PlayModeBtn = new JButton( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] );
+		m_PlayModeBtn.setBounds( posX, posY, BUTTON_WIDTH, BUTTON_HEIGHT );
+		m_PlayModeBtn.addActionListener( this );
+		m_PlayModeBtn.setActionCommand( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_TOTAL.ordinal() ] );
+		m_PlayCtrl.add( m_PlayModeBtn );
+
+		// 音量調整バー作成
+		m_VolumeAdjBar = new JScrollBar( JScrollBar.HORIZONTAL, 500, 0, 0, 1000 );
+		m_VolumeAdjBar.setBounds( 10, 38, 110, 10 );
+		m_VolumeAdjBar.addAdjustmentListener( m_AdjListener );
+		m_PlayCtrl.add( m_VolumeAdjBar );
+
+		// パン調整バー作成
+		m_PanAdjBar = new JScrollBar( JScrollBar.HORIZONTAL, 500, 0, 0, 1000 );
+		m_PanAdjBar.setBounds( 130, 38, 110, 10 );
+		m_PanAdjBar.addAdjustmentListener( m_AdjListener );
+		m_PlayCtrl.add( m_PanAdjBar );
+
 		// シークバー作成
 		m_SeekBar = new JScrollBar( JScrollBar.HORIZONTAL, 0, 0, 0, 1000 );
-		m_SeekBar.setBounds( 10, 40, 150, 20 );
+		m_SeekBar.setBounds( 10, 50, 270, 10 );
 		m_SeekBar.addAdjustmentListener( m_AdjListener );
 		m_PlayCtrl.add( m_SeekBar );
 
 		// 再生時間表示ラベル作成
-		m_PlayTimeLbl = new JLabel( "00:00" );
-		m_PlayTimeLbl.setBounds( 170, 40, 40, 20 );
+		m_PlayTimeLbl = new JLabel( "00:00 / 00:00" );
+		m_PlayTimeLbl.setBounds( 290, 45, 90, 20 );
 		m_PlayCtrl.add( m_PlayTimeLbl );
-
-		// 音楽の長さ表示ラベル作成
-		m_MusicLengthLbl = new JLabel( "00:00" );
-		m_MusicLengthLbl.setBounds( 210, 40, 50, 20 );
-		m_PlayCtrl.add( m_MusicLengthLbl );
 
 		// 音楽プレイヤーの作成
 		m_Player = new BasicPlayer();
 		m_Player.addBasicPlayerListener( m_BasicListener );
+		try{
+			m_Player.setGain( 1.0 * m_VolumeAdjBar.getValue() / m_VolumeAdjBar.getMaximum() );
+			m_Player.setPan( -1.0 + 2.0 * m_PanAdjBar.getValue() / m_PanAdjBar.getMaximum() );
+		}
+		catch( BasicPlayerException e ){
+			e.printStackTrace();
+		}
+
 
 		mainWnd.add( m_PlayCtrl );
 	}
@@ -198,7 +267,7 @@ public class PlayController extends IComponent implements ActionListener
 		if( cmd.equals( PLAY_BUTTON_NAME ) ){
 			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Play Button Pushed" );
 		}
-		if( cmd.equals( STOP_BUTTON_NAME ) ){
+		else if( cmd.equals( STOP_BUTTON_NAME ) ){
 			try{
 				m_Player.stop();
 			}
@@ -222,6 +291,14 @@ public class PlayController extends IComponent implements ActionListener
 			}
 			catch( BasicPlayerException e ){
 				e.printStackTrace();
+			}
+		}
+		else if( cmd.equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_TOTAL.ordinal() ] ) ){
+			if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] ) ){
+				m_PlayModeBtn.setText( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] );
+			}
+			else if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
+				m_PlayModeBtn.setText( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] );
 			}
 		}
 	}

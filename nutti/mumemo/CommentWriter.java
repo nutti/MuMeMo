@@ -77,13 +77,13 @@ public class CommentWriter extends IComponent implements ActionListener
 
 		// コメントライター領域
 		m_CommWriter = new JPanel();
-		m_CommWriter.setBounds( 180, 160, 250, 200 );
+		m_CommWriter.setBounds( 390, 90, 200, 200 );
 		m_CommWriter.setBackground( Color.WHITE );
 		m_CommWriter.setLayout( null );
 
 		// コメント入力エリア
 		m_CommInputArea = new JTextArea( "コメントを入力してください" );
-		m_CommInputArea.setBounds( 10, 10, 180, 100 );
+		m_CommInputArea.setBounds( 10, 10, 180, 120 );
 		m_CommInputArea.setBackground( Color.GRAY );
 		m_CommInputArea.addMouseListener( m_CommInputAreaML );
 		m_CommWriter.add( m_CommInputArea );
@@ -91,7 +91,7 @@ public class CommentWriter extends IComponent implements ActionListener
 
 		// コメント入力ボタン
 		m_CommButton = new JButton( COMMENT_BUTTON_NAME );
-		m_CommButton.setBounds( 10, 110, 60, 20 );
+		m_CommButton.setBounds( 140, 140, 50, 20 );
 		m_CommButton.addActionListener( this );
 		m_CommButton.setActionCommand( m_CommButton.getText() );
 		m_CommWriter.add( m_CommButton );
@@ -104,12 +104,12 @@ public class CommentWriter extends IComponent implements ActionListener
 
 		// 新しいタグ名入力エリア
 		m_NewTagNameInputArea = new JTextField();
-		m_NewTagNameInputArea.setBounds( 10, 170, 100, 20 );
+		m_NewTagNameInputArea.setBounds( 10, 170, 120, 20 );
 		m_CommWriter.add( m_NewTagNameInputArea );
 
 		// 新しいタグ作成ボタン
 		m_CreateTagBtn = new JButton( CREATE_TAG_BUTTON_NAME );
-		m_CreateTagBtn.setBounds( 110, 170, 80, 20 );
+		m_CreateTagBtn.setBounds( 140, 170, 50, 20 );
 		m_CreateTagBtn.addActionListener( this );
 		m_CreateTagBtn.setActionCommand( m_CreateTagBtn.getText() );
 		m_CommWriter.add( m_CreateTagBtn );
