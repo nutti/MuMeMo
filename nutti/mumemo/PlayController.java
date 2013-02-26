@@ -56,6 +56,50 @@ public class PlayController extends IComponent implements ActionListener
 
 	private int				m_PrevSec;				// 前回更新時の時間
 
+	// リピート再生用監視スレッド
+	private RepeatThread	m_RepeatThread;
+	private class RepeatThread extends Thread
+	{
+		private boolean		m_HasTermSig = false;
+
+		public void start()
+		{
+			super.start();
+		}
+		public void run()
+		{
+			while( !hasTermSig() ){
+				// 連続再生用チェック
+				if( m_Player.getStatus() == BasicPlayer.STOPPED ){
+					if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
+						try{
+							m_Player.play();
+						}
+						catch( BasicPlayerException e ){
+							e.printStackTrace();
+						}
+					}
+				}
+				else{
+					try{
+						Thread.sleep( 1 );
+					}
+					catch( InterruptedException e ){
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		synchronized private boolean hasTermSig()
+		{
+			return m_HasTermSig;
+		}
+		synchronized public void term()
+		{
+			m_HasTermSig = true;
+		}
+	}
+
 	private BasicPlayerListener		m_BasicListener = new BasicPlayerListener()
 	{
 		public void stateUpdated( BasicPlayerEvent event )
@@ -74,7 +118,13 @@ public class PlayController extends IComponent implements ActionListener
 			// 音楽の長さを秒単位で取得
 			// 全バイト数 / 1秒あたりの転送バイト数（ビットレート）
 			String type = m_AudioInfo.get( "audio.type" ).toString();
-			long bitrate = Long.parseLong( m_AudioInfo.get( "mp3.bitrate.nominal.bps" ).toString() );	// ビットレート
+			long bitrate = 0;
+			if( type.equals( "MP3" ) ){
+				bitrate = Long.parseLong( m_AudioInfo.get( "mp3.bitrate.nominal.bps" ).toString() );	// ビットレート
+			}
+			else{
+				System.exit( -1 );
+			}
 
 			long totalSecond = length / ( bitrate / 8 );						// 音楽総再生時間
 
@@ -105,17 +155,7 @@ public class PlayController extends IComponent implements ActionListener
 				m_PrevSec = curSecond;
 			}
 
-			// 連続再生用チェック
-			if( m_Player.getStatus() == BasicPlayer.STOPPED ){
-				if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
-					try{
-						m_Player.play();
-					}
-					catch( BasicPlayerException e ){
-						e.printStackTrace();
-					}
-				}
-			}
+
 		}
 		public void setController( BasicController controller )
 		{
@@ -269,9 +309,18 @@ public class PlayController extends IComponent implements ActionListener
 		}
 		else if( cmd.equals( STOP_BUTTON_NAME ) ){
 			try{
+				// 連続再生用スレッドストップ
+				if( m_RepeatThread != null ){
+					m_RepeatThread.term();
+					m_RepeatThread.join();
+					m_RepeatThread = null;
+				}
 				m_Player.stop();
 			}
 			catch( BasicPlayerException e ){
+				e.printStackTrace();
+			}
+			catch( InterruptedException e ){
 				e.printStackTrace();
 			}
 			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, Constant.MsgID.MSG_ID_STOP.ordinal(), null );
@@ -296,9 +345,19 @@ public class PlayController extends IComponent implements ActionListener
 		else if( cmd.equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_TOTAL.ordinal() ] ) ){
 			if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] ) ){
 				m_PlayModeBtn.setText( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] );
+				// 連続再生用スレッドスタート
+				if( m_RepeatThread == null ){
+					m_RepeatThread = new RepeatThread();
+					m_RepeatThread.start();
+				}
 			}
 			else if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
 				m_PlayModeBtn.setText( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] );
+				// 連続再生用スレッドストップ
+				if( m_RepeatThread != null ){
+					m_RepeatThread.term();
+					m_RepeatThread = null;
+				}
 			}
 		}
 	}
@@ -321,12 +380,31 @@ public class PlayController extends IComponent implements ActionListener
 						try{
 							m_Player.open( file );
 							m_Player.play();
+							// 連続再生用スレッドスタート
+							if( m_RepeatThread == null ){
+								m_RepeatThread = new RepeatThread();
+								m_RepeatThread.start();
+							}
 						}
 						catch( BasicPlayerException e ){
 							e.printStackTrace();
 						}
 					}
 					m_PrevSec = -1;
+				}
+				break;
+			case COM_ID_APP_MAIN:
+				if( msg == Constant.MsgID.MSG_ID_APP_TERM.ordinal() ){
+					try{
+						if( m_RepeatThread != null ){
+							m_RepeatThread.term();
+							m_RepeatThread.join();
+							m_RepeatThread = null;
+						}
+					}
+					catch( InterruptedException e ){
+						e.printStackTrace();
+					}
 				}
 				break;
 			default:
