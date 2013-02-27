@@ -57,7 +57,18 @@ public class CommentFileHandler
 	{
 		cleanup();
 		m_FileName = fileName;
-		saveFile();
+		try{
+			FileOutputStream out = new FileOutputStream( m_FileName );
+			out.close();
+		}
+		catch( FileNotFoundException e ){
+			e.printStackTrace();
+		}
+		catch( IOException e ){
+			e.printStackTrace();
+		}
+		//saveFile();
+
 	}
 
 	public void saveFile()
@@ -68,6 +79,9 @@ public class CommentFileHandler
 			}
 
 			FileOutputStream out = new FileOutputStream( m_FileName );
+
+			// バージョン情報
+			Util.saveLong( out, Constant.MUMEMO_VERSION );
 
 			// ヘッダの保存
 			Util.saveInt( out, m_Format.m_Header.m_MusicNameBytes );
@@ -125,6 +139,12 @@ public class CommentFileHandler
 		FileInputStream in;
 		try {
 			in = new FileInputStream( m_FileName );
+
+			long version = Util.loadLong( in );
+			if( version != Constant.MUMEMO_VERSION ){
+				return;
+			}
+
 			// ヘッダの保存
 			m_Format.m_Header.m_MusicNameBytes = Util.loadInt( in );
 			m_Format.m_Header.m_MusicName = Util.loadStringUTF8( in, m_Format.m_Header.m_MusicNameBytes );

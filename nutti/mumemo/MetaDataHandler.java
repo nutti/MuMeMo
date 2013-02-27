@@ -34,6 +34,12 @@ public class MetaDataHandler
 			// 全エントリの読み込み
 			FileInputStream in = new FileInputStream( m_FileName );
 
+			// バージョンチェック
+			long version = Util.loadLong( in );
+			if( version != Constant.MUMEMO_VERSION ){
+				return;
+			}
+
 			while( true ){
 				int len;
 				long musicLen;				// 音楽の長さ
@@ -87,6 +93,13 @@ public class MetaDataHandler
 			// 既に同名のエントリが存在する場合は、無視
 			if( m_CommentFilePath.get( name ) != null ){
 				return;
+			}
+
+			// 初回時のみバージョン情報保存
+			if( !Util.fileExist( m_FileName ) ){
+				FileOutputStream out = new FileOutputStream( m_FileName, true );
+				Util.saveLong( out, Constant.MUMEMO_VERSION );
+				out.close();
 			}
 
 			// エントリをファイルに追記する

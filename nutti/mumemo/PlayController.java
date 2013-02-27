@@ -375,20 +375,18 @@ public class PlayController extends IComponent implements ActionListener
 		switch( from ){
 			case COM_ID_PLAY_LIST:
 				if( msg == Constant.MsgID.MSG_ID_PLAY.ordinal() ){
-					if( options.length == 3 ){
-						File file = new File( options[ 0 ] );
-						try{
-							m_Player.open( file );
-							m_Player.play();
-							// 連続再生用スレッドスタート
-							if( m_RepeatThread == null ){
-								m_RepeatThread = new RepeatThread();
-								m_RepeatThread.start();
-							}
+					File file = new File( options[ 0 ] );
+					try{
+						m_Player.open( file );
+						m_Player.play();
+						// 連続再生用スレッドスタート
+						if( m_RepeatThread == null ){
+							m_RepeatThread = new RepeatThread();
+							m_RepeatThread.start();
 						}
-						catch( BasicPlayerException e ){
-							e.printStackTrace();
-						}
+					}
+					catch( BasicPlayerException e ){
+						e.printStackTrace();
 					}
 					m_PrevSec = -1;
 				}

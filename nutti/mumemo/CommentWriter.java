@@ -179,8 +179,8 @@ public class CommentWriter extends IComponent implements ActionListener
 						m_CommFileHandler.loadFile( filePath );
 					}
 					else{
-						m_CommFileHandler.buildHeader( musicName, 0 );
 						m_CommFileHandler.createFile( filePath );
+						m_CommFileHandler.buildHeader( musicName, 0 );
 					}
 					// タグ情報の読み込み
 					for( int i = 0; i < m_CommFileHandler.getTagEntriesTotal(); ++i ){
@@ -202,6 +202,12 @@ public class CommentWriter extends IComponent implements ActionListener
 					m_CommFileHandler.closeFile();
 					cleanupTags();
 				}
+				break;
+			case COM_ID_APP_MAIN:
+				if( msg == Constant.MsgID.MSG_ID_APP_TERM.ordinal() ){
+					m_CommFileHandler.closeFile();
+				}
+				break;
 			default:
 				break;
 		}

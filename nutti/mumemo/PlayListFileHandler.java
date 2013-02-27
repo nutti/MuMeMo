@@ -1,5 +1,6 @@
 package nutti.mumemo;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -9,6 +10,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javazoom.jlgui.basicplayer.BasicController;
+import javazoom.jlgui.basicplayer.BasicPlayer;
+import javazoom.jlgui.basicplayer.BasicPlayerEvent;
+import javazoom.jlgui.basicplayer.BasicPlayerException;
+import javazoom.jlgui.basicplayer.BasicPlayerListener;
+
 import nutti.lib.LibException;
 import nutti.lib.Util;
 
@@ -17,17 +24,41 @@ public class PlayListFileHandler
 
 	public class MusicInfo
 	{
-		public String		m_FilePath;			// ファイルパス
-		public String		m_MusicTitle;		// 音楽のタイトル
-		public int			m_MusicLen;			// 音楽の長さ
-		public long			m_FileSize;			// ファイルサイズ
-		public String		m_Author;			// 作者
-		public int			m_BitRate;			// ビットレート
+		String			m_FilePath;		// ファイルパス
+		String			m_FileName;		// ファイル名
+		long			m_FileSize;		// ファイルサイズ
+		long			m_Length;		// 音楽の長さ
+		long			m_Freq;			// 周波数
+		long			m_Bits;			// ビット数
+		long			m_BitRate;		// ビットレート
+		String			m_Format;		// ファイルフォーマット
+		long			m_Channel;		// チャンネル数
+		String			m_Composer;		// 作曲家
+		String			m_Title;		// タイトル
+		long			m_IsCBR;		// CBR形式ならtrue
 	}
 
 	private String							m_FileName;				// ファイル名
 	private Map < String, MusicInfo >		m_MusicList;			// 音楽リスト（キー:ファイルパス、値:音楽情報）
 	private ArrayList < String >			m_FilePathListArray;	// ファイルパスリスト
+
+	private Map						m_AudioInfo;			// 曲情報
+	private BasicPlayerListener		m_BasicListener = new BasicPlayerListener()
+	{
+		public void stateUpdated( BasicPlayerEvent event )
+		{
+		}
+		public void opened( Object stream, Map properties )
+		{
+			m_AudioInfo = properties;
+		}
+		public void progress( int bytesread, long microseconds, byte[] pcmdata, Map properties )
+		{
+		}
+		public void setController( BasicController controller )
+		{
+		}
+	};
 
 
 	public PlayListFileHandler()
@@ -44,21 +75,33 @@ public class PlayListFileHandler
 		try {
 			FileInputStream in = new FileInputStream( m_FileName );
 
+			// バージョンチェック
+			long version = Util.loadLong( in );
+			if( version != Constant.MUMEMO_VERSION ){
+				return;
+			}
+
 			while( true ){
 				MusicInfo info = new MusicInfo();
 				int len = 0;
 
-
-
 				len = Util.loadInt( in );
 				info.m_FilePath = Util.loadStringUTF8( in, len );
 				len = Util.loadInt( in );
-				info.m_MusicTitle = Util.loadStringUTF8( in, len );
-				info.m_MusicLen = Util.loadInt( in );
+				info.m_FileName = Util.loadStringUTF8( in, len );
 				info.m_FileSize = Util.loadLong( in );
+				info.m_Length = Util.loadLong( in );
+				info.m_Freq = Util.loadLong( in );
+				info.m_Bits = Util.loadLong( in );
+				info.m_BitRate = Util.loadLong( in );
 				len = Util.loadInt( in );
-				info.m_Author = Util.loadStringUTF8( in, len );
-				info.m_BitRate = Util.loadInt( in );
+				info.m_Format = Util.loadStringUTF8( in, len );
+				info.m_Channel = Util.loadLong( in );
+				len = Util.loadInt( in );
+				info.m_Composer = Util.loadStringUTF8( in, len );
+				len = Util.loadInt( in );
+				info.m_Title = Util.loadStringUTF8( in, len );
+				info.m_IsCBR = Util.loadLong( in );
 
 				m_MusicList.put( info.m_FilePath, info );
 				m_FilePathListArray.add( info.m_FilePath );
@@ -75,38 +118,50 @@ public class PlayListFileHandler
 		}
 	}
 
-	void addItem( String filePath, String musicTitle, int musicLen, long fileSize, String author, int bitrate )
+	public MusicInfo addItem( String filePath )
 	{
+		// ファイルが閉じられていた場合は終了
 		if( fileClosed() ){
-			return;
+			return null;
 		}
 
+		// 既に同名のエントリが存在する場合は、無視
+		if( m_MusicList.get( filePath ) != null ){
+			return null;
+		}
+
+		// ファイル情報を取得
+		MusicInfo info = loadMusicInfo( filePath );
+
 		try{
-			// 既に同名のエントリが存在する場合は、無視
-			if( m_MusicList.get( filePath ) != null ){
-				return;
+			// 初回時のみバージョン情報保存
+			if( !Util.fileExist( m_FileName ) ){
+				FileOutputStream out = new FileOutputStream( m_FileName, true );
+				Util.saveLong( out, Constant.MUMEMO_VERSION );
+				out.close();
 			}
 
 			// エントリをファイルに追記する
 			FileOutputStream out = new FileOutputStream( m_FileName, true );
 
-			Util.saveInt( out, Util.getStringUTF8Byte( filePath ) );
-			Util.saveStringUTF8( out, filePath );
-			Util.saveInt( out, Util.getStringUTF8Byte( musicTitle ) );
-			Util.saveStringUTF8( out, musicTitle );
-			Util.saveInt( out, musicLen );
-			Util.saveLong( out, fileSize );
-			Util.saveInt( out, Util.getStringUTF8Byte( author ) );
-			Util.saveStringUTF8( out, author );
-			Util.saveInt( out, bitrate );
 
-			MusicInfo info = new MusicInfo();
-			info.m_FilePath = filePath;
-			info.m_MusicTitle = musicTitle;
-			info.m_MusicLen = musicLen;
-			info.m_FileSize = fileSize;
-			info.m_Author = author;
-			info.m_BitRate = bitrate;
+			Util.saveInt( out, Util.getStringUTF8Byte( info.m_FilePath ) );
+			Util.saveStringUTF8( out, info.m_FilePath );
+			Util.saveInt(out, Util.getStringUTF8Byte( info.m_FileName ) );
+			Util.saveStringUTF8( out, info.m_FileName );
+			Util.saveLong( out, info.m_FileSize );
+			Util.saveLong( out, info.m_Length );
+			Util.saveLong( out, info.m_Freq );
+			Util.saveLong( out, info.m_Bits );
+			Util.saveLong( out, info.m_BitRate );
+			Util.saveInt( out, Util.getStringUTF8Byte( info.m_Format ) );
+			Util.saveStringUTF8( out, info.m_Format );
+			Util.saveLong( out, info.m_Channel );
+			Util.saveInt( out, Util.getStringUTF8Byte( info.m_Composer ) );
+			Util.saveStringUTF8( out, info.m_Composer );
+			Util.saveInt( out, Util.getStringUTF8Byte( info.m_Title ) );
+			Util.saveStringUTF8( out,info.m_Title );
+			Util.saveLong( out, info.m_IsCBR );
 
 			m_MusicList.put( filePath, info );
 			m_FilePathListArray.add( filePath );
@@ -118,13 +173,18 @@ public class PlayListFileHandler
 		}
 		catch( FileNotFoundException e ){
 			e.printStackTrace();
+			return null;
 		}
 		catch( UnsupportedEncodingException e ){
 			e.printStackTrace();
+			return null;
 		}
 		catch( IOException e ){
 			e.printStackTrace();
+			return null;
 		}
+
+		return info;
 	}
 
 	public int getEntryTotal()
@@ -168,5 +228,57 @@ public class PlayListFileHandler
 	private boolean fileClosed()
 	{
 		return m_FileName.equals( "" );
+	}
+
+	private MusicInfo loadMusicInfo( String filePath )
+	{
+		MusicInfo info = new MusicInfo();
+
+		BasicPlayer player = new BasicPlayer();
+		File file = new File( filePath );
+		player.addBasicPlayerListener( m_BasicListener );
+		try{
+			player.open( file );
+			// ファイルパス
+			info.m_FilePath = filePath;
+			// ファイル名
+			info.m_FileName = file.getName();
+			// ファイルサイズの取得
+			info.m_FileSize = file.length();
+			// 現在の音楽再生位置を取得（秒単位）
+			info.m_Length = Long.parseLong( m_AudioInfo.get( "audio.length.bytes" ).toString() );
+			// 曲名の取得
+			info.m_Title = m_AudioInfo.get( "title" ).toString();
+			// 作曲者の取得
+			info.m_Composer = m_AudioInfo.get( "author" ).toString();
+			// ファイルタイプを取得
+			String type = m_AudioInfo.get( "audio.type" ).toString();
+			// .mp3の場合
+			if( type.equals( "MP3" ) ){
+				// ビットレートの取得
+				info.m_BitRate = Long.parseLong( m_AudioInfo.get( "mp3.bitrate.nominal.bps" ).toString() );
+				// チャンネル数の取得
+				info.m_Channel = Long.parseLong( m_AudioInfo.get( "mp3.channels" ).toString() );
+				// CBR or VBR
+				if( Boolean.parseBoolean( m_AudioInfo.get( "mp3.vbr" ).toString() ) == false ){
+					info.m_IsCBR = 1;
+				}
+				else{
+					info.m_IsCBR = 0;
+				}
+				// サンプルレートの取得
+				info.m_Freq = ( long ) ( Double.parseDouble( m_AudioInfo.get( "mp3.frequency.hz" ).toString() ) );
+				// ファイルフォーマットの取得
+				info.m_Format = m_AudioInfo.get( "mp3.version.encoding" ).toString();
+			}
+
+
+
+		}
+		catch( BasicPlayerException e ){
+			e.printStackTrace();
+		}
+
+		return info;
 	}
 }

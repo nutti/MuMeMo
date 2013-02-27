@@ -18,6 +18,7 @@ public class Application
 	private JFrame		m_MainWnd;		// メインウィンドウ
 
 	private PlayController			m_PlayCtrl;			// 音楽再生制御
+	private MusicInfoBoard			m_MusicInfoBoard;	// 音楽情報板
 	private CommentWriter			m_CommWriter;		// コメントライター
 	private MessageMediator			m_MsgMediator;		// 全体制御
 	private MetaDataHandler			m_MetaDataHandler;	// メタデータハンドラ
@@ -50,6 +51,9 @@ public class Application
 
 		m_PlayCtrl = new PlayController( m_MainWnd, m_MsgMediator );
 		m_MsgMediator.addComponent( m_PlayCtrl );
+
+		m_MusicInfoBoard = new MusicInfoBoard( m_MainWnd, m_MsgMediator );
+		m_MsgMediator.addComponent( m_MusicInfoBoard );
 
 		m_MetaDataHandler = new MetaDataHandler();
 		m_MetaDataHandler.loadMetaDataFile( Constant.META_FILE_NAME );
