@@ -126,6 +126,7 @@ public class PlayList extends IComponent
 		m_PlayList.add( m_MusicListScrollBar );
 
 		m_DropTarget = new DropTarget( m_MusicList, m_FileDropEvent );
+		m_MusicList.setDropTarget( m_DropTarget );
 
 		// プレイリストファイルからデータの読み込みを行う。
 		m_PlayListFileHandler = new PlayListFileHandler();

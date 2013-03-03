@@ -8,11 +8,13 @@ import java.awt.event.AdjustmentListener;
 import java.io.File;
 import java.util.Map;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import javax.swing.plaf.basic.BasicPanelUI;
 
 import nutti.mumemo.Constant.ComponentID;
 
@@ -55,6 +57,7 @@ public class PlayController extends IComponent implements ActionListener
 	private Map				m_AudioInfo;			// 再生中の曲情報
 
 	private int				m_PrevSec;				// 前回更新時の時間
+	private boolean			m_Paused;				// ポーズされていたらtrue
 
 	// リピート再生用監視スレッド
 	private RepeatThread	m_RepeatThread;
@@ -71,7 +74,7 @@ public class PlayController extends IComponent implements ActionListener
 			while( !hasTermSig() ){
 				// 連続再生用チェック
 				if( m_Player.getStatus() == BasicPlayer.STOPPED ){
-					if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
+					if( m_PlayModeBtn.getActionCommand().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
 						try{
 							m_Player.play();
 						}
@@ -221,45 +224,57 @@ public class PlayController extends IComponent implements ActionListener
 		m_PlayCtrl.setBackground( Color.BLACK );
 		m_PlayCtrl.setLayout( null );
 
-		final int BUTTON_WIDTH		= 80;
+		final int BUTTON_WIDTH		= 20;
 		final int BUTTON_HEIGHT		= 20;
-		final int BUTTON_OFFSET_X	= 10;
+		final int BUTTON_OFFSET_X	= 0;
 
-		int posX = 10;
+		int posX = 280;
 		int posY = 10;
 
 		// 再生ボタン作成
-		m_PlayBtn = new JButton( PLAY_BUTTON_NAME );
+		ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button.png" );
+		m_PlayBtn = new JButton( icon );
 		m_PlayBtn.setBounds( posX, posY, BUTTON_WIDTH, BUTTON_HEIGHT );
 		m_PlayBtn.addActionListener( this );
-		m_PlayBtn.setActionCommand( m_PlayBtn.getText() );
+		m_PlayBtn.setActionCommand( PLAY_BUTTON_NAME );
+		m_PlayBtn.setContentAreaFilled( false );
+		m_PlayBtn.setBorderPainted( false );
 		m_PlayCtrl.add( m_PlayBtn );
 
 		posX += BUTTON_WIDTH + BUTTON_OFFSET_X;
 
 		// 停止ボタン作成
-		m_StopBtn = new JButton( STOP_BUTTON_NAME );
+		icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/stop_button.png" );
+		m_StopBtn = new JButton( icon );
 		m_StopBtn.setBounds( posX, posY, BUTTON_WIDTH, BUTTON_HEIGHT );
 		m_StopBtn.addActionListener( this );
-		m_StopBtn.setActionCommand( m_StopBtn.getText() );
+		m_StopBtn.setActionCommand( STOP_BUTTON_NAME );
+		m_StopBtn.setContentAreaFilled( false );
+		m_StopBtn.setBorderPainted( false );
 		m_PlayCtrl.add( m_StopBtn );
 
 		posX += BUTTON_WIDTH + BUTTON_OFFSET_X;
 
 		// 一時停止ボタン作成
-		m_PauseBtn = new JButton( PAUSE_BUTTON_NAME );
+		icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button.png" );
+		m_PauseBtn = new JButton( icon );
 		m_PauseBtn.setBounds( posX, posY, BUTTON_WIDTH, BUTTON_HEIGHT );
 		m_PauseBtn.addActionListener( this );
-		m_PauseBtn.setActionCommand( m_PauseBtn.getText() );
+		m_PauseBtn.setActionCommand( PAUSE_BUTTON_NAME );
+		m_PauseBtn.setContentAreaFilled( false );
+		m_PauseBtn.setBorderPainted( false );
 		m_PlayCtrl.add( m_PauseBtn );
 
 		posX += BUTTON_WIDTH + BUTTON_OFFSET_X;
 
 		// 再生モード作成
-		m_PlayModeBtn = new JButton( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] );
+		icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/once_button.png" );
+		m_PlayModeBtn = new JButton( icon );
 		m_PlayModeBtn.setBounds( posX, posY, BUTTON_WIDTH, BUTTON_HEIGHT );
 		m_PlayModeBtn.addActionListener( this );
-		m_PlayModeBtn.setActionCommand( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_TOTAL.ordinal() ] );
+		m_PlayModeBtn.setActionCommand( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] );
+		m_PlayModeBtn.setContentAreaFilled( false );
+		m_PlayModeBtn.setBorderPainted( false );
 		m_PlayCtrl.add( m_PlayModeBtn );
 
 		// 音量調整バー作成
@@ -296,6 +311,7 @@ public class PlayController extends IComponent implements ActionListener
 			e.printStackTrace();
 		}
 
+		m_Paused = false;
 
 		mainWnd.add( m_PlayCtrl );
 	}
@@ -316,6 +332,13 @@ public class PlayController extends IComponent implements ActionListener
 					m_RepeatThread = null;
 				}
 				m_Player.stop();
+				ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button.png" );
+				m_PlayBtn.setIcon( icon );
+				if( m_Paused ){
+					icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button.png" );
+					m_PauseBtn.setIcon( icon );
+					m_Paused = false;
+				}
 			}
 			catch( BasicPlayerException e ){
 				e.printStackTrace();
@@ -328,37 +351,47 @@ public class PlayController extends IComponent implements ActionListener
 		else if( cmd.equals( PAUSE_BUTTON_NAME ) ){
 			try{
 				// 再生状態 -> 一時停止状態
-				if( m_PauseBtn.getText().equals( PAUSE_BUTTON_NAME ) ){
-					m_PauseBtn.setText( "Resume" );
+				if( !m_Paused && m_Player.getStatus() == BasicPlayer.PLAYING ){
 					m_Player.pause();
+					ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button.png" );
+					m_PlayBtn.setIcon( icon );
+					icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button_rev.png" );
+					m_PauseBtn.setIcon( icon );
+					m_Paused = true;
 				}
 				// 一時停止状態 -> 再生状態
-				else{
-					m_PauseBtn.setText( PAUSE_BUTTON_NAME );
+				else if( m_Paused ){
 					m_Player.resume();
+					ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button_rev.png" );
+					m_PlayBtn.setIcon( icon );
+					icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button.png" );
+					m_PauseBtn.setIcon( icon );
+					m_Paused = false;
 				}
 			}
 			catch( BasicPlayerException e ){
 				e.printStackTrace();
 			}
 		}
-		else if( cmd.equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_TOTAL.ordinal() ] ) ){
-			if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] ) ){
-				m_PlayModeBtn.setText( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] );
-				// 連続再生用スレッドスタート
-				if( m_RepeatThread == null ){
-					m_RepeatThread = new RepeatThread();
-					m_RepeatThread.start();
-				}
+		else if( cmd.equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] ) ){
+			ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/repeat_button.png" );
+			// 連続再生用スレッドスタート
+			if( m_RepeatThread == null ){
+				m_RepeatThread = new RepeatThread();
+				m_RepeatThread.start();
 			}
-			else if( m_PlayModeBtn.getText().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
-				m_PlayModeBtn.setText( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] );
-				// 連続再生用スレッドストップ
-				if( m_RepeatThread != null ){
-					m_RepeatThread.term();
-					m_RepeatThread = null;
-				}
+			m_PlayModeBtn.setIcon( icon );
+			m_PlayModeBtn.setActionCommand( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] );
+		}
+		else if( cmd.equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
+			ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/once_button.png" );
+			// 連続再生用スレッドストップ
+			if( m_RepeatThread != null ){
+				m_RepeatThread.term();
+				m_RepeatThread = null;
 			}
+			m_PlayModeBtn.setIcon( icon );
+			m_PlayModeBtn.setActionCommand( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] );
 		}
 	}
 
@@ -384,6 +417,9 @@ public class PlayController extends IComponent implements ActionListener
 							m_RepeatThread = new RepeatThread();
 							m_RepeatThread.start();
 						}
+						ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button_rev.png" );
+						m_PlayBtn.setIcon( icon );
+						m_Paused = false;
 					}
 					catch( BasicPlayerException e ){
 						e.printStackTrace();

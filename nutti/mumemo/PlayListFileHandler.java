@@ -233,6 +233,7 @@ public class PlayListFileHandler
 	private MusicInfo loadMusicInfo( String filePath )
 	{
 		MusicInfo info = new MusicInfo();
+		Object obj;
 
 		BasicPlayer player = new BasicPlayer();
 		File file = new File( filePath );
@@ -246,30 +247,44 @@ public class PlayListFileHandler
 			// ファイルサイズの取得
 			info.m_FileSize = file.length();
 			// 現在の音楽再生位置を取得（秒単位）
-			info.m_Length = Long.parseLong( m_AudioInfo.get( "audio.length.bytes" ).toString() );
+			obj = m_AudioInfo.get( "audio.length.bytes" );
+			info.m_Length = obj != null ? Long.parseLong( obj.toString() ) : 0;
 			// 曲名の取得
-			info.m_Title = m_AudioInfo.get( "title" ).toString();
+			obj = m_AudioInfo.get( "title" );
+			info.m_Title = obj != null ? obj.toString() : "";
 			// 作曲者の取得
-			info.m_Composer = m_AudioInfo.get( "author" ).toString();
+			obj = m_AudioInfo.get( "author" );
+			info.m_Composer = obj != null ? obj.toString() : "";
 			// ファイルタイプを取得
-			String type = m_AudioInfo.get( "audio.type" ).toString();
+			obj = m_AudioInfo.get( "audio.type" );
+			String type = obj != null ? obj.toString() : "Unknown Type";
 			// .mp3の場合
 			if( type.equals( "MP3" ) ){
 				// ビットレートの取得
-				info.m_BitRate = Long.parseLong( m_AudioInfo.get( "mp3.bitrate.nominal.bps" ).toString() );
+				obj = m_AudioInfo.get( "mp3.bitrate.nominal.bps" );
+				info.m_BitRate = obj != null ? Long.parseLong( obj.toString() ) : 0;
 				// チャンネル数の取得
-				info.m_Channel = Long.parseLong( m_AudioInfo.get( "mp3.channels" ).toString() );
+				obj = m_AudioInfo.get( "mp3.channels" );
+				info.m_Channel = obj != null ? Long.parseLong( obj.toString() ) : 0;
 				// CBR or VBR
-				if( Boolean.parseBoolean( m_AudioInfo.get( "mp3.vbr" ).toString() ) == false ){
-					info.m_IsCBR = 1;
+				obj = m_AudioInfo.get( "mp3.vbr" );
+				if( obj != null ){
+					if( Boolean.parseBoolean( obj.toString() ) == false ){
+						info.m_IsCBR = 1;
+					}
+					else{
+						info.m_IsCBR = 0;
+					}
 				}
 				else{
-					info.m_IsCBR = 0;
+					info.m_IsCBR = -1;
 				}
 				// サンプルレートの取得
-				info.m_Freq = ( long ) ( Double.parseDouble( m_AudioInfo.get( "mp3.frequency.hz" ).toString() ) );
+				obj = m_AudioInfo.get( "mp3.frequency.hz" );
+				info.m_Freq = obj != null ? ( long ) ( Double.parseDouble( obj.toString() ) ) : 0;
 				// ファイルフォーマットの取得
-				info.m_Format = m_AudioInfo.get( "mp3.version.encoding" ).toString();
+				obj = m_AudioInfo.get( "mp3.version.encoding" );
+				info.m_Format = obj != null ? obj.toString() : "";
 			}
 
 
