@@ -130,7 +130,7 @@ public class CommentWriter extends IComponent implements ActionListener
 				tagList.add( m_TagSelectList.getSelectedIndex() - 1 );
 				// コメントファイルにコメント追加
 				Date date = new Date();
-				m_CommFileHandler.addComment( m_PlayTime, date.getTime(), "nutti", options[ 0 ], tagList );
+				m_CommFileHandler.addComment( m_PlayTime, date.getTime(), Config.getInst().getCommName(), options[ 0 ], tagList );
 				// コメント欄消去
 				m_CommInputArea.setText( "" );
 				// メッセージ送信
@@ -166,10 +166,10 @@ public class CommentWriter extends IComponent implements ActionListener
 				}
  			case COM_ID_PLAY_LIST:
  				if( msg.equals( "Prepare Comment Data" ) ){
-					String[] elms = options[ 2 ].split( "/" );
+					//String[] elms = options[ 2 ].split( "/" );
 					long musicLen = Long.parseLong( options[ 1 ] );
-					String musicName = elms[ elms.length - 1 ];
-					String filePath = Constant.COMMENT_FILE_DIR  + "/[" + options[ 1 ] + "]" + musicName + Constant.COMMENT_FILE_SUFFIX;
+					String musicName = options[ 2 ];
+					String filePath = Constant.COMMENT_FILE_DIR  + "/[" + options[ 1 ] + "](" + options[ 9 ] + ")" + musicName + Constant.COMMENT_FILE_SUFFIX;
 					// メタデータ
 					if( m_MetaDataHandler.getCommentFilePath( musicName, musicLen ) == null ){
 						m_MetaDataHandler.addMetaData( musicName, musicLen, filePath );

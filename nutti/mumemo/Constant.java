@@ -33,4 +33,6 @@ public class Constant
 	public static final String PLAY_LIST_FILE_NAME		= DATA_FILE_DIR + "/playlist.lst";
 	public static final String MUSIC_FILE_DIR			= "music";
 	public static final String SKIN_FILES_DIR			= "skin";
+	public static final String CONFIG_FILE_DIR			= "config";
+	public static final String CONFIG_FILE_NAME			= CONFIG_FILE_DIR + "/mumemo.ini";
 }

@@ -42,6 +42,8 @@ public class Application
 			return;
 		}
 
+		Config.getInst().load();
+
 		m_MainWnd = new JFrame( APP_TITLE );	// タイトルの設定
 		m_MainWnd.setBounds( WIN_BOUND );		// ウィンドウサイズの設定
 		m_MainWnd.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );		// ×ボタンで閉じる
@@ -130,6 +132,7 @@ public class Application
 			catch( IOException e ){
 				e.printStackTrace();
 			}
+			Config.getInst().save();
 		}
 	}
 }
