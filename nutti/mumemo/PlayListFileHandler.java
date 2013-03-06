@@ -36,6 +36,7 @@ public class PlayListFileHandler
 		String			m_Composer;		// 作曲家
 		String			m_Title;		// タイトル
 		long			m_IsCBR;		// CBR形式ならtrue
+		long			m_PlayCount;	// 再生回数
 	}
 
 	private String							m_FileName;				// ファイル名
@@ -102,6 +103,7 @@ public class PlayListFileHandler
 				len = Util.loadInt( in );
 				info.m_Title = Util.loadStringUTF8( in, len );
 				info.m_IsCBR = Util.loadLong( in );
+				info.m_PlayCount = Util.loadLong( in );
 
 				m_MusicList.put( info.m_FilePath, info );
 				m_FilePathListArray.add( info.m_FilePath );
@@ -162,6 +164,7 @@ public class PlayListFileHandler
 			Util.saveInt( out, Util.getStringUTF8Byte( info.m_Title ) );
 			Util.saveStringUTF8( out,info.m_Title );
 			Util.saveLong( out, info.m_IsCBR );
+			Util.saveLong( out, info.m_PlayCount );
 
 			m_MusicList.put( filePath, info );
 			m_FilePathListArray.add( filePath );

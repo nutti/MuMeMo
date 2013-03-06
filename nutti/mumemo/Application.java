@@ -1,9 +1,12 @@
 package nutti.mumemo;
 
+import java.awt.Color;
 import java.awt.Rectangle;
 import java.io.IOException;
 
 import javax.swing.JFrame;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import nutti.lib.MultipleRunChecker;
 import nutti.lib.Util;
@@ -44,10 +47,27 @@ public class Application
 
 		Config.getInst().load();
 
+		/*try{
+			UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+		}
+		catch(ClassNotFoundException e ){
+			e.printStackTrace();
+		}
+		catch( InstantiationException e ){
+			e.printStackTrace();
+		}
+		catch( IllegalAccessException e ){
+			e.printStackTrace();
+		}
+		catch( UnsupportedLookAndFeelException e ){
+			e.printStackTrace();
+		}*/
+
 		m_MainWnd = new JFrame( APP_TITLE );	// タイトルの設定
 		m_MainWnd.setBounds( WIN_BOUND );		// ウィンドウサイズの設定
 		m_MainWnd.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );		// ×ボタンで閉じる
 		m_MainWnd.setLayout( null );			// レイアウトマネージャを停止
+
 
 		m_MsgMediator = new MessageMediator();
 
@@ -71,7 +91,10 @@ public class Application
 		m_PlayList = new PlayList( m_MainWnd, m_MsgMediator, m_MetaDataHandler );
 		m_MsgMediator.addComponent( m_PlayList );
 
+		m_MainWnd.getContentPane().setBackground( Color.BLACK );
 		m_MainWnd.setVisible( true );
+
+		m_MsgMediator.postMsg( ComponentID.COM_ID_APP_MAIN,  Constant.MsgID.MSG_ID_APP_INIT.ordinal(), null );
 
 		// 終了処理を追加
 		Runtime.getRuntime().addShutdownHook( new Shutdown() );

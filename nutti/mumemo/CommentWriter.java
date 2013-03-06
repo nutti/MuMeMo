@@ -169,7 +169,7 @@ public class CommentWriter extends IComponent implements ActionListener
 					//String[] elms = options[ 2 ].split( "/" );
 					long musicLen = Long.parseLong( options[ 1 ] );
 					String musicName = options[ 2 ];
-					String filePath = Constant.COMMENT_FILE_DIR  + "/[" + options[ 1 ] + "](" + options[ 9 ] + ")" + musicName + Constant.COMMENT_FILE_SUFFIX;
+					String filePath = Constant.COMMENT_FILE_DIR  + "/[" + options[ 1 ] + "](" + options[ 9 ] + ") " + musicName + Constant.COMMENT_FILE_SUFFIX;
 					// メタデータ
 					if( m_MetaDataHandler.getCommentFilePath( musicName, musicLen ) == null ){
 						m_MetaDataHandler.addMetaData( musicName, musicLen, filePath );

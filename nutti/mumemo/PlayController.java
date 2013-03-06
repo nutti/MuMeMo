@@ -74,14 +74,14 @@ public class PlayController extends IComponent implements ActionListener
 			while( !hasTermSig() ){
 				// 連続再生用チェック
 				if( m_Player.getStatus() == BasicPlayer.STOPPED ){
-					if( m_PlayModeBtn.getActionCommand().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
+					/*if( m_PlayModeBtn.getActionCommand().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
 						try{
 							m_Player.play();
 						}
 						catch( BasicPlayerException e ){
 							e.printStackTrace();
 						}
-					}
+					}*/
 				}
 				else{
 					try{
@@ -107,6 +107,17 @@ public class PlayController extends IComponent implements ActionListener
 	{
 		public void stateUpdated( BasicPlayerEvent event )
 		{
+			if( event.getCode() == event.EOM ){
+				if( m_PlayModeBtn.getActionCommand().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
+					try{
+						m_Player.stop();
+						m_Player.play();
+					}
+					catch( BasicPlayerException e ){
+						e.printStackTrace();
+					}
+				}
+			}
 		}
 		public void opened( Object stream, Map properties )
 		{

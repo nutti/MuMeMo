@@ -1,24 +1,34 @@
 package nutti.mumemo;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
 
 import javazoom.jlgui.basicplayer.BasicController;
 import javazoom.jlgui.basicplayer.BasicPlayer;
@@ -26,14 +36,17 @@ import javazoom.jlgui.basicplayer.BasicPlayerEvent;
 import javazoom.jlgui.basicplayer.BasicPlayerException;
 import javazoom.jlgui.basicplayer.BasicPlayerListener;
 
+import nutti.lib.ImagedPanel;
 import nutti.mumemo.Constant.ComponentID;
 
 public class PlayList extends IComponent
 {
 
-	private JPanel					m_PlayList;				// プレイリスト
-	private JList					m_MusicList;			// 音楽リスト
-	private DefaultListModel		m_DefListModel;			// JList項目追加用
+	private ImagedPanel				m_PlayList;				// プレイリスト
+
+
+	private JTable					m_MusicList;			// 音楽リスト
+	private DefaultTableModel		m_DefTblModel;			// JTable項目追加用
 	private JScrollPane				m_MusicListScrollBar;	// スクロールバー
 
 	private DropTarget				m_DropTarget;			// ドラック＆ドロップ
@@ -46,10 +59,7 @@ public class PlayList extends IComponent
 		public void mouseClicked( MouseEvent event )
 		{
 			if( event.getClickCount() == 2 ){
-				int index = m_MusicList.locationToIndex( event.getPoint() );
-				if( !m_MusicList.getCellBounds( index, index ).contains( event.getPoint() ) ){
-					index = -1;
-				}
+				int index = m_MusicList.rowAtPoint( event.getPoint() );
 				if( index >= 0 ){
 					playMusic( index );
 				}
@@ -80,7 +90,7 @@ public class PlayList extends IComponent
 			try{
 				Transferable transfer = event.getTransferable();
 				if( transfer.isDataFlavorSupported( DataFlavor.javaFileListFlavor ) ){
-					event.acceptDrop( DnDConstants.ACTION_COPY_OR_MOVE );
+					event.acceptDrop( DnDConstants.ACTION_COPY );
 					List < File > fileList = ( List ) ( transfer.getTransferData( DataFlavor.javaFileListFlavor ) );
 					String[] options = new String[ fileList.size() * 2 ];
 					int count = 0;
@@ -89,10 +99,10 @@ public class PlayList extends IComponent
 						if( info != null ){
 							options[ count++ ] = info.m_Title;		// タイトル
 							options[ count++ ] = info.m_FilePath;		// ファイルのパスを取得
-							m_DefListModel.addElement( info.m_Title );
+							String[] items = { Integer.toString( m_DefTblModel.getRowCount() + 1 ), info.m_Title, info.m_Composer, Long.toString( info.m_Length ) };
+							m_DefTblModel.addRow( items );
 						}
 					}
-					m_MusicList.ensureIndexIsVisible( m_DefListModel.size() - 1 );
 					m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, "File Dropped", options );
 				}
 			}
@@ -110,32 +120,43 @@ public class PlayList extends IComponent
 		m_MetaDataHandler = meta;
 
 		// プレイリスト領域
-		m_PlayList = new JPanel();
+		m_PlayList = new ImagedPanel( Constant.SKIN_FILES_DIR + "/" + "default/play_list.png" );
 		m_PlayList.setBounds( 10, 90, 370, 200 );
 		m_PlayList.setBackground( Color.YELLOW );
 		m_PlayList.setLayout( null );
 
 		// 音楽一覧
-		m_DefListModel = new DefaultListModel();
-		m_MusicList = new JList( m_DefListModel );
-		m_MusicListScrollBar = new JScrollPane( m_MusicList );
-		m_MusicListScrollBar.setBounds( 10, 10, 350, 180 );
-		m_MusicList.setBounds( 10, 10, 350, 180 );
-		m_MusicList.setBackground( Color.WHITE );
+		String[] colTitles = { "No", "Title", "Composer", "Play Time" };
+		m_DefTblModel = new DefaultTableModel( colTitles, 0 );
+		m_MusicList = new JTable( m_DefTblModel );
+
+		m_MusicList.setBounds( 10, 25, 350, 165 );
+		m_MusicList.setBackground( Color.BLACK );
+		m_MusicList.setForeground( Color.WHITE );
+		m_MusicList.getTableHeader().setPreferredSize( new Dimension( 10, 18 ) );
 		m_MusicList.addMouseListener( m_MusicListML );
+		m_DropTarget = new DropTarget( m_MusicList, DnDConstants.ACTION_COPY, m_FileDropEvent, true );
+		m_MusicList.setDefaultEditor( Object.class, null );
+		m_MusicListScrollBar = new JScrollPane( m_MusicList );
+		m_MusicListScrollBar.setBounds( 10, 25, 350, 165 );
+		m_MusicListScrollBar.getViewport().setBackground( Color.BLACK );
+		m_MusicListScrollBar.setDropTarget( m_DropTarget );
+		m_MusicListScrollBar.setBorder( new EmptyBorder( 0, 0, 0, 0 ) );
+		//m_MusicList.setBorder( null );
 		m_PlayList.add( m_MusicListScrollBar );
 
-		m_DropTarget = new DropTarget( m_MusicList, m_FileDropEvent );
-		m_MusicList.setDropTarget( m_DropTarget );
+
+
+
 
 		// プレイリストファイルからデータの読み込みを行う。
 		m_PlayListFileHandler = new PlayListFileHandler();
 		m_PlayListFileHandler.load( Constant.PLAY_LIST_FILE_NAME );
 		for( int i = 0; i < m_PlayListFileHandler.getEntryTotal(); ++i ){
 			PlayListFileHandler.MusicInfo info = m_PlayListFileHandler.getMusicInfo( i );
-			m_DefListModel.addElement( info.m_Title );
+			String[] items = { Integer.toString( i + 1 ), info.m_Title, info.m_Composer, Long.toString( info.m_Length ) };
+			m_DefTblModel.addRow( items );
 		}
-		m_MusicList.ensureIndexIsVisible( m_DefListModel.size() - 1 );
 
 		mainWnd.add( m_PlayList );
 	}
@@ -146,8 +167,10 @@ public class PlayList extends IComponent
 		switch( from ){
 			case COM_ID_PLAY_CONTROLLER:
 				if( msg.equals( "Play Button Pushed" ) ){
-					int idx = m_MusicList.getSelectedIndex();
-					playMusic( idx );
+					int idx = m_MusicList.getSelectedColumn();
+					if( idx >= 0 ){
+						playMusic( idx );
+					}
 				}
 				break;
 			default:
@@ -163,7 +186,10 @@ public class PlayList extends IComponent
 	{
 		switch( from ){
 			case COM_ID_APP_MAIN:
-				if( msg == Constant.MsgID.MSG_ID_APP_TERM.ordinal() ){
+				if( msg == Constant.MsgID.MSG_ID_APP_INIT.ordinal() ){
+
+				}
+				else if( msg == Constant.MsgID.MSG_ID_APP_TERM.ordinal() ){
 					m_PlayListFileHandler.closeFile();
 				}
 				break;
@@ -194,5 +220,7 @@ public class PlayList extends IComponent
 		m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, ComponentID.COM_ID_COMMENT_WRITER, "Prepare Comment Data", options );
 		m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, Constant.MsgID.MSG_ID_PLAY.ordinal(), options );
 	}
+
+
 
 }
