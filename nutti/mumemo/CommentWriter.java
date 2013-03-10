@@ -19,6 +19,7 @@ import javax.swing.JTextField;
 
 import javazoom.jlgui.basicplayer.BasicPlayerException;
 
+import nutti.lib.ImagedPanel;
 import nutti.lib.Util;
 import nutti.mumemo.Constant.ComponentID;
 
@@ -27,7 +28,7 @@ public class CommentWriter extends IComponent implements ActionListener
 	private static final String COMMENT_BUTTON_NAME = "Comment";
 	private static final String CREATE_TAG_BUTTON_NAME = "Create Tag";
 
-	private JPanel					m_CommWriter;					// コメントライター
+	private ImagedPanel				m_CommWriter;					// コメントライター
 	private JTextArea				m_CommInputArea;				// コメント入力エリア
 	private boolean					m_ClickedCommInputAreaFirst;	// コメント入力エリアをクリックしたのが初めての場合
 	private JButton					m_CommButton;					// コメントを書くボタン
@@ -76,14 +77,14 @@ public class CommentWriter extends IComponent implements ActionListener
 		m_CommFileHandler = comm;
 
 		// コメントライター領域
-		m_CommWriter = new JPanel();
+		m_CommWriter = new ImagedPanel( Constant.SKIN_FILES_DIR + "/" + "default/comm_writer.png" );
 		m_CommWriter.setBounds( 390, 90, 200, 200 );
 		m_CommWriter.setBackground( Color.WHITE );
 		m_CommWriter.setLayout( null );
 
 		// コメント入力エリア
 		m_CommInputArea = new JTextArea( "コメントを入力してください" );
-		m_CommInputArea.setBounds( 10, 10, 180, 120 );
+		m_CommInputArea.setBounds( 10, 30, 180, 100 );
 		m_CommInputArea.setBackground( Color.GRAY );
 		m_CommInputArea.addMouseListener( m_CommInputAreaML );
 		m_CommWriter.add( m_CommInputArea );

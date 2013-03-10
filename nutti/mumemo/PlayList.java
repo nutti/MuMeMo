@@ -99,7 +99,9 @@ public class PlayList extends IComponent
 						if( info != null ){
 							options[ count++ ] = info.m_Title;		// タイトル
 							options[ count++ ] = info.m_FilePath;		// ファイルのパスを取得
-							String[] items = { Integer.toString( m_DefTblModel.getRowCount() + 1 ), info.m_Title, info.m_Composer, Long.toString( info.m_Length ) };
+							long totalSec = info.m_Length / ( info.m_BitRate / 8 );
+							String[] items = {	Integer.toString( m_DefTblModel.getRowCount() + 1 ), info.m_Title, info.m_Composer,
+												Long.toString( totalSec / 60 ) + ":" + Long.toString( totalSec % 60 ) };
 							m_DefTblModel.addRow( items );
 						}
 					}
@@ -129,7 +131,6 @@ public class PlayList extends IComponent
 		String[] colTitles = { "No", "Title", "Composer", "Play Time" };
 		m_DefTblModel = new DefaultTableModel( colTitles, 0 );
 		m_MusicList = new JTable( m_DefTblModel );
-
 		m_MusicList.setBounds( 10, 25, 350, 165 );
 		m_MusicList.setBackground( Color.BLACK );
 		m_MusicList.setForeground( Color.WHITE );
@@ -154,7 +155,9 @@ public class PlayList extends IComponent
 		m_PlayListFileHandler.load( Constant.PLAY_LIST_FILE_NAME );
 		for( int i = 0; i < m_PlayListFileHandler.getEntryTotal(); ++i ){
 			PlayListFileHandler.MusicInfo info = m_PlayListFileHandler.getMusicInfo( i );
-			String[] items = { Integer.toString( i + 1 ), info.m_Title, info.m_Composer, Long.toString( info.m_Length ) };
+			long totalSec = info.m_Length / ( info.m_BitRate / 8 );
+			String[] items = {	Integer.toString( i + 1 ), info.m_Title, info.m_Composer,
+								Long.toString( totalSec / 60 ) + ":" + Long.toString( totalSec % 60 ) };
 			m_DefTblModel.addRow( items );
 		}
 
@@ -167,7 +170,7 @@ public class PlayList extends IComponent
 		switch( from ){
 			case COM_ID_PLAY_CONTROLLER:
 				if( msg.equals( "Play Button Pushed" ) ){
-					int idx = m_MusicList.getSelectedColumn();
+					int idx = m_MusicList.getSelectedRow();
 					if( idx >= 0 ){
 						playMusic( idx );
 					}

@@ -19,7 +19,7 @@ public class MusicInfoBoard extends IComponent
 		super( mediator, ComponentID.COM_ID_MUSIC_INFO_BOARD );
 
 		m_MusicInfoBoard = new JPanel();
-		m_MusicInfoBoard.setBounds( 390, 10, 200, 70 );
+		m_MusicInfoBoard.setBounds( 390, 10, 290, 70 );
 		m_MusicInfoBoard.setBackground( Color.BLACK );
 		m_MusicInfoBoard.setLayout( null );
 
@@ -27,6 +27,8 @@ public class MusicInfoBoard extends IComponent
 		m_InfoTextArea.setEditable( false );
 		m_InfoTextArea.setBounds( 10, 10, 180, 50 );
 		m_MusicInfoBoard.add( m_InfoTextArea );
+
+
 
 		mainWnd.add( m_MusicInfoBoard );
 	}

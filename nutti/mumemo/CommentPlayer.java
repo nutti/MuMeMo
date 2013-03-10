@@ -13,6 +13,10 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
 
 import nutti.lib.Util;
 import nutti.mumemo.Constant.ComponentID;
@@ -21,8 +25,9 @@ public class CommentPlayer extends IComponent
 {
 	private JPanel					m_CommPlayer;					// コメント表示
 	private JComboBox				m_TagSelectList;				// 選択可能なタグリスト
-	private JList					m_CommList;						// コメント一覧
-	private DefaultListModel		m_DefListModel;					// JList項目追加用
+	private JTable					m_CommList;						// コメント一覧
+	private DefaultTableModel		m_DefTblModel;					// JList項目追加用
+	private JScrollPane				m_CommListScrollBar;			// スクロールバー
 
 	private CommentFileHandler		m_CommFileHandler;				// コメントファイルハンドラ
 
@@ -37,7 +42,7 @@ public class CommentPlayer extends IComponent
 		// コメントライター領域
 		m_CommPlayer = new JPanel();
 		m_CommPlayer.setBounds( 10, 300, 580, 150 );
-		m_CommPlayer.setBackground( Color.CYAN );
+		m_CommPlayer.setBackground( Color.BLACK );
 		m_CommPlayer.setLayout( null );
 
 		// 選択可能なタグリスト
@@ -47,11 +52,18 @@ public class CommentPlayer extends IComponent
 		m_CommPlayer.add( m_TagSelectList );
 
 		// コメント一覧
-		m_DefListModel = new DefaultListModel();
-		m_CommList = new JList( m_DefListModel );
+		String[] colTitles = { "Time", "Date", "Author", "Comment" };
+		m_DefTblModel = new DefaultTableModel( colTitles, 0 );
+		m_CommList = new JTable( m_DefTblModel );
 		m_CommList.setBounds( 10, 40, 560, 100 );
-		m_CommList.setBackground( Color.WHITE );
-		m_CommPlayer.add( m_CommList );
+		m_CommList.setForeground( Color.WHITE );
+		m_CommList.setBackground( Color.BLACK );
+		m_CommList.setDefaultEditor( Object.class, null );
+		m_CommListScrollBar = new JScrollPane( m_CommList );
+		m_CommListScrollBar.setBounds( 10, 40, 560, 100 );
+		m_CommListScrollBar.getViewport().setBackground( Color.BLACK );
+		m_CommListScrollBar.setBorder( new EmptyBorder( 0, 0, 0, 0 ) );
+		m_CommPlayer.add( m_CommListScrollBar );
 
 
 		mainWnd.add( m_CommPlayer );
@@ -69,30 +81,23 @@ public class CommentPlayer extends IComponent
 				if( msg.equals( "Update Time" ) ){
 					int curSecond = Integer.parseInt( options[ 0 ] );
 					// 古いコメントの削除
-					Pattern pattern = Pattern.compile( "\\[(.+)\\]" );
-					for( int i = 0; i < m_DefListModel.getSize(); ++i ){
-						Matcher matcher = pattern.matcher( (String) m_DefListModel.getElementAt( i ) );
-						if( matcher.find() ){
-							String[] elms = matcher.group( 1 ).split( ":" );
-							int pos = Integer.parseInt( elms[ 0 ] ) * 60 + Integer.parseInt( elms[ 1 ] );
-							if( curSecond - pos > 2 ){
-								m_DefListModel.remove( i );
-								m_CommList.ensureIndexIsVisible( m_DefListModel.getSize() - 1 );
-							}
+					for( int i = 0; i < m_DefTblModel.getRowCount(); ++i ){
+						String time = m_DefTblModel.getValueAt( i, 0 ).toString();
+						String[] elms = time.split( ":" );
+						int pos = Integer.parseInt( elms[ 0 ] ) * 60 + Integer.parseInt( elms[ 1 ] );
+						if( curSecond - pos > 5 ){
+							m_DefTblModel.removeRow( i );
 						}
 					}
 					// 新しいコメントの追加
-					String comment;
 					for( int i = 0; i < m_CommFileHandler.getCommentEntriesTotal( curSecond ); ++i ){
 						if( m_CommFileHandler.commentReleatedTag( curSecond, i, m_TagSelectList.getSelectedIndex() - 1 ) ){
-							comment = "[" + Integer.toString( (int)( curSecond / 60 ) ) + ":" + Integer.toString( curSecond % 60 ) + "] ";
 							SimpleDateFormat fmt = new SimpleDateFormat( "yyyy.MM.dd HH:mm:ss" );
-							String str = fmt.format( new Date( m_CommFileHandler.getCommentedDate( curSecond, i ) ) );
-							comment = comment + str + " ";
-							comment = comment + "(" + m_CommFileHandler.getCommentAuthor( curSecond, i ) + ")\n";
-							comment = comment + m_CommFileHandler.getComment( curSecond, i );
-							m_DefListModel.addElement( comment );
-							m_CommList.ensureIndexIsVisible( m_DefListModel.getSize() - 1 );
+							String[] elms = {	Integer.toString( (int)( curSecond / 60 ) ) + ":" + Integer.toString( curSecond % 60 ),
+												fmt.format( new Date( m_CommFileHandler.getCommentedDate( curSecond, i ) ) ),
+												m_CommFileHandler.getCommentAuthor( curSecond, i ),
+												m_CommFileHandler.getComment( curSecond, i ) };
+							m_DefTblModel.addRow( elms );
 						}
 					}
 				}
@@ -137,7 +142,8 @@ public class CommentPlayer extends IComponent
 	// コメント全消去
 	private void cleanupComments()
 	{
-		m_DefListModel.clear();
-		m_CommList.ensureIndexIsVisible( m_DefListModel.getSize() - 1 );
+		for( int i = 0; i < m_DefTblModel.getRowCount(); ++i ){
+			m_DefTblModel.removeRow( i );
+		}
 	}
 }

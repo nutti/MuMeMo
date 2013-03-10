@@ -14,8 +14,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
-import javax.swing.plaf.basic.BasicPanelUI;
+import javax.swing.JTextArea;
 
+import nutti.lib.sound.MusicPlayer;
 import nutti.mumemo.Constant.ComponentID;
 
 import javazoom.jlgui.basicplayer.BasicController;
@@ -59,49 +60,10 @@ public class PlayController extends IComponent implements ActionListener
 	private int				m_PrevSec;				// 前回更新時の時間
 	private boolean			m_Paused;				// ポーズされていたらtrue
 
-	// リピート再生用監視スレッド
-	private RepeatThread	m_RepeatThread;
-	private class RepeatThread extends Thread
-	{
-		private boolean		m_HasTermSig = false;
+	private JTextArea		m_MusicTitleBoard;		// 再生中の音楽名表示板
 
-		public void start()
-		{
-			super.start();
-		}
-		public void run()
-		{
-			while( !hasTermSig() ){
-				// 連続再生用チェック
-				if( m_Player.getStatus() == BasicPlayer.STOPPED ){
-					/*if( m_PlayModeBtn.getActionCommand().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
-						try{
-							m_Player.play();
-						}
-						catch( BasicPlayerException e ){
-							e.printStackTrace();
-						}
-					}*/
-				}
-				else{
-					try{
-						Thread.sleep( 1 );
-					}
-					catch( InterruptedException e ){
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-		synchronized private boolean hasTermSig()
-		{
-			return m_HasTermSig;
-		}
-		synchronized public void term()
-		{
-			m_HasTermSig = true;
-		}
-	}
+	private MusicPlayer		m_MusicPlayer;
+
 
 	private BasicPlayerListener		m_BasicListener = new BasicPlayerListener()
 	{
@@ -111,7 +73,7 @@ public class PlayController extends IComponent implements ActionListener
 				if( m_PlayModeBtn.getActionCommand().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
 					try{
 						m_Player.stop();
-						m_Player.play();
+						playMusic();
 					}
 					catch( BasicPlayerException e ){
 						e.printStackTrace();
@@ -322,6 +284,31 @@ public class PlayController extends IComponent implements ActionListener
 			e.printStackTrace();
 		}
 
+		m_MusicTitleBoard = new JTextArea();
+		m_MusicTitleBoard.setEditable( false );
+		m_MusicTitleBoard.setBounds( 10, 10, 260, 20 );
+		m_MusicTitleBoard.setBackground( Color.white );
+		m_PlayCtrl.add( m_MusicTitleBoard );
+
+
+		m_MusicPlayer = new MusicPlayer();
+		m_MusicPlayer.open( "202_level1.mp3" );
+		m_MusicPlayer.play();
+		try {
+			Thread.sleep( 1000 );
+		} catch (InterruptedException e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		}
+		m_MusicPlayer.pause();
+		try {
+			Thread.sleep( 2000 );
+		} catch (InterruptedException e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		}
+		m_MusicPlayer.resume();
+
 		m_Paused = false;
 
 		mainWnd.add( m_PlayCtrl );
@@ -336,12 +323,6 @@ public class PlayController extends IComponent implements ActionListener
 		}
 		else if( cmd.equals( STOP_BUTTON_NAME ) ){
 			try{
-				// 連続再生用スレッドストップ
-				if( m_RepeatThread != null ){
-					m_RepeatThread.term();
-					m_RepeatThread.join();
-					m_RepeatThread = null;
-				}
 				m_Player.stop();
 				ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button.png" );
 				m_PlayBtn.setIcon( icon );
@@ -350,11 +331,9 @@ public class PlayController extends IComponent implements ActionListener
 					m_PauseBtn.setIcon( icon );
 					m_Paused = false;
 				}
+				m_MusicTitleBoard.setText( "" );
 			}
 			catch( BasicPlayerException e ){
-				e.printStackTrace();
-			}
-			catch( InterruptedException e ){
 				e.printStackTrace();
 			}
 			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, Constant.MsgID.MSG_ID_STOP.ordinal(), null );
@@ -386,21 +365,11 @@ public class PlayController extends IComponent implements ActionListener
 		}
 		else if( cmd.equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] ) ){
 			ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/repeat_button.png" );
-			// 連続再生用スレッドスタート
-			if( m_RepeatThread == null ){
-				m_RepeatThread = new RepeatThread();
-				m_RepeatThread.start();
-			}
 			m_PlayModeBtn.setIcon( icon );
 			m_PlayModeBtn.setActionCommand( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] );
 		}
 		else if( cmd.equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
 			ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/once_button.png" );
-			// 連続再生用スレッドストップ
-			if( m_RepeatThread != null ){
-				m_RepeatThread.term();
-				m_RepeatThread = null;
-			}
 			m_PlayModeBtn.setIcon( icon );
 			m_PlayModeBtn.setActionCommand( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] );
 		}
@@ -422,12 +391,7 @@ public class PlayController extends IComponent implements ActionListener
 					File file = new File( options[ 0 ] );
 					try{
 						m_Player.open( file );
-						m_Player.play();
-						// 連続再生用スレッドスタート
-						if( m_RepeatThread == null ){
-							m_RepeatThread = new RepeatThread();
-							m_RepeatThread.start();
-						}
+						playMusic();
 						ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button_rev.png" );
 						m_PlayBtn.setIcon( icon );
 						m_Paused = false;
@@ -436,24 +400,29 @@ public class PlayController extends IComponent implements ActionListener
 						e.printStackTrace();
 					}
 					m_PrevSec = -1;
+					m_MusicTitleBoard.setText( options[ 2 ] );
 				}
 				break;
 			case COM_ID_APP_MAIN:
 				if( msg == Constant.MsgID.MSG_ID_APP_TERM.ordinal() ){
-					try{
-						if( m_RepeatThread != null ){
-							m_RepeatThread.term();
-							m_RepeatThread.join();
-							m_RepeatThread = null;
-						}
-					}
-					catch( InterruptedException e ){
-						e.printStackTrace();
-					}
 				}
 				break;
 			default:
 				break;
+		}
+	}
+
+	private void playMusic()
+	{
+		double volume = 1.0 * m_VolumeAdjBar.getValue() / m_VolumeAdjBar.getMaximum();
+		double pan = -1.0 + 2.0 * m_PanAdjBar.getValue() / m_PanAdjBar.getMaximum();
+		try{
+			m_Player.play();
+			m_Player.setGain( volume );
+			m_Player.setPan( pan );
+		}
+		catch( BasicPlayerException e ){
+			e.printStackTrace();
 		}
 	}
 }
