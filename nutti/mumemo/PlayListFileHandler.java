@@ -10,14 +10,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import javazoom.jlgui.basicplayer.BasicController;
-import javazoom.jlgui.basicplayer.BasicPlayer;
-import javazoom.jlgui.basicplayer.BasicPlayerEvent;
-import javazoom.jlgui.basicplayer.BasicPlayerException;
-import javazoom.jlgui.basicplayer.BasicPlayerListener;
-
 import nutti.lib.LibException;
 import nutti.lib.Util;
+import nutti.lib.sound.MusicPlayer;
 
 public class PlayListFileHandler
 {
@@ -42,25 +37,6 @@ public class PlayListFileHandler
 	private String							m_FileName;				// ファイル名
 	private Map < String, MusicInfo >		m_MusicList;			// 音楽リスト（キー:ファイルパス、値:音楽情報）
 	private ArrayList < String >			m_FilePathListArray;	// ファイルパスリスト
-
-	private Map						m_AudioInfo;			// 曲情報
-	private BasicPlayerListener		m_BasicListener = new BasicPlayerListener()
-	{
-		public void stateUpdated( BasicPlayerEvent event )
-		{
-		}
-		public void opened( Object stream, Map properties )
-		{
-			m_AudioInfo = properties;
-		}
-		public void progress( int bytesread, long microseconds, byte[] pcmdata, Map properties )
-		{
-		}
-		public void setController( BasicController controller )
-		{
-		}
-	};
-
 
 	public PlayListFileHandler()
 	{
@@ -236,66 +212,37 @@ public class PlayListFileHandler
 	private MusicInfo loadMusicInfo( String filePath )
 	{
 		MusicInfo info = new MusicInfo();
-		Object obj;
 
-		BasicPlayer player = new BasicPlayer();
+		MusicPlayer player = new MusicPlayer();
 		File file = new File( filePath );
-		player.addBasicPlayerListener( m_BasicListener );
-		try{
-			player.open( file );
-			// ファイルパス
-			info.m_FilePath = filePath;
-			// ファイル名
-			info.m_FileName = file.getName();
-			// ファイルサイズの取得
-			info.m_FileSize = file.length();
-			// 現在の音楽再生位置を取得（秒単位）
-			obj = m_AudioInfo.get( "audio.length.bytes" );
-			info.m_Length = obj != null ? Long.parseLong( obj.toString() ) : 0;
-			// 曲名の取得
-			obj = m_AudioInfo.get( "title" );
-			info.m_Title = obj != null ? obj.toString() : "";
-			// 作曲者の取得
-			obj = m_AudioInfo.get( "author" );
-			info.m_Composer = obj != null ? obj.toString() : "";
-			// ファイルタイプを取得
-			obj = m_AudioInfo.get( "audio.type" );
-			String type = obj != null ? obj.toString() : "Unknown Type";
-			// .mp3の場合
-			if( type.equals( "MP3" ) ){
-				// ビットレートの取得
-				obj = m_AudioInfo.get( "mp3.bitrate.nominal.bps" );
-				info.m_BitRate = obj != null ? Long.parseLong( obj.toString() ) : 0;
-				// チャンネル数の取得
-				obj = m_AudioInfo.get( "mp3.channels" );
-				info.m_Channel = obj != null ? Long.parseLong( obj.toString() ) : 0;
-				// CBR or VBR
-				obj = m_AudioInfo.get( "mp3.vbr" );
-				if( obj != null ){
-					if( Boolean.parseBoolean( obj.toString() ) == false ){
-						info.m_IsCBR = 1;
-					}
-					else{
-						info.m_IsCBR = 0;
-					}
-				}
-				else{
-					info.m_IsCBR = -1;
-				}
-				// サンプルレートの取得
-				obj = m_AudioInfo.get( "mp3.frequency.hz" );
-				info.m_Freq = obj != null ? ( long ) ( Double.parseDouble( obj.toString() ) ) : 0;
-				// ファイルフォーマットの取得
-				obj = m_AudioInfo.get( "mp3.version.encoding" );
-				info.m_Format = obj != null ? obj.toString() : "";
-			}
+		player.open( filePath );
+		MusicPlayer.AudioInfo infoRaw;
+		infoRaw = player.getAudioInfo();
+		player.stop();
 
+		// ファイルパス
+		info.m_FilePath = filePath;
+		// ファイル名
+		info.m_FileName = file.getName();
+		// ファイルサイズの取得
+		info.m_FileSize = file.length();
+		// 現在の音楽再生位置を取得（秒単位）
+		info.m_Length = infoRaw.m_Length;
+		// 曲名の取得
+		info.m_Title = infoRaw.m_Title;
+		// 作曲者の取得
+		info.m_Composer = infoRaw.m_Composer;
 
-
-		}
-		catch( BasicPlayerException e ){
-			e.printStackTrace();
-		}
+		// ビットレートの取得
+		info.m_BitRate = infoRaw.m_BitRate;
+		// チャンネル数の取得
+		info.m_Channel = infoRaw.m_Channel;
+		// CBR or VBR
+		info.m_IsCBR = infoRaw.m_IsCBR;
+		// サンプルレートの取得
+		info.m_Freq = infoRaw.m_Freq;
+		// ファイルフォーマットの取得
+		info.m_Format = infoRaw.m_Format;
 
 		return info;
 	}

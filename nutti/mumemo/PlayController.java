@@ -5,8 +5,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
-import java.io.File;
-import java.util.Map;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -16,14 +14,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextArea;
 
+import nutti.lib.sound.IMusicPlayerListener;
 import nutti.lib.sound.MusicPlayer;
+import nutti.lib.sound.MusicPlayer.AudioInfo;
+import nutti.lib.sound.MusicPlayer.StatusFlag;
 import nutti.mumemo.Constant.ComponentID;
-
-import javazoom.jlgui.basicplayer.BasicController;
-import javazoom.jlgui.basicplayer.BasicPlayer;
-import javazoom.jlgui.basicplayer.BasicPlayerEvent;
-import javazoom.jlgui.basicplayer.BasicPlayerException;
-import javazoom.jlgui.basicplayer.BasicPlayerListener;
 
 
 public class PlayController extends IComponent implements ActionListener
@@ -54,49 +49,36 @@ public class PlayController extends IComponent implements ActionListener
 	private JScrollBar		m_PanAdjBar;			// パン調整バー
 	private JLabel			m_PlayTimeLbl;			// 再生時間
 
-	private BasicPlayer		m_Player;				// Basic Player
-	private Map				m_AudioInfo;			// 再生中の曲情報
 
 	private int				m_PrevSec;				// 前回更新時の時間
 	private boolean			m_Paused;				// ポーズされていたらtrue
 
 	private JTextArea		m_MusicTitleBoard;		// 再生中の音楽名表示板
 
-	private MusicPlayer		m_MusicPlayer;
+	private MusicPlayer		m_Player;
+
+	private AudioInfo		m_AudioInfo;
 
 
-	private BasicPlayerListener		m_BasicListener = new BasicPlayerListener()
+	private IMusicPlayerListener		m_MusicPlayerListener = new IMusicPlayerListener()
 	{
-		public void stateUpdated( BasicPlayerEvent event )
+		public void opened( AudioInfo info )
 		{
-			if( event.getCode() == event.EOM ){
-				if( m_PlayModeBtn.getActionCommand().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
-					try{
-						m_Player.stop();
-						playMusic();
-					}
-					catch( BasicPlayerException e ){
-						e.printStackTrace();
-					}
-				}
-			}
+			m_AudioInfo = info;
 		}
-		public void opened( Object stream, Map properties )
-		{
-			m_AudioInfo = properties;
-		}
-		public void progress( int bytesread, long microseconds, byte[] pcmdata, Map properties )
+
+		public void progress( long readBytes, long microSec, byte[] pcmData, AudioInfo info )
 		{
 			// 現在の音楽再生位置を取得
-			long length = Long.parseLong( m_AudioInfo.get( "audio.length.bytes" ).toString() );		// 音楽のバイト総数
-			int curSeekPos = ( int ) ( ( double )bytesread / length * m_SeekBar.getMaximum() );			// 現在のシークバーの位置
+			long length = info.m_Length;		// 音楽のバイト総数
+			int curSeekPos = ( int ) ( ( double )readBytes / length * m_SeekBar.getMaximum() );			// 現在のシークバーの位置
 
 			// 音楽の長さを秒単位で取得
 			// 全バイト数 / 1秒あたりの転送バイト数（ビットレート）
-			String type = m_AudioInfo.get( "audio.type" ).toString();
+			String type = "MP3";
 			long bitrate = 0;
 			if( type.equals( "MP3" ) ){
-				bitrate = Long.parseLong( m_AudioInfo.get( "mp3.bitrate.nominal.bps" ).toString() );	// ビットレート
+				bitrate = info.m_BitRate;	// ビットレート
 			}
 			else{
 				System.exit( -1 );
@@ -106,7 +88,7 @@ public class PlayController extends IComponent implements ActionListener
 
 			// 再生時間を秒単位で取得
 			// 読み込んだバイト数 * 音楽の長さ / 音楽のバイト総数
-			int curSecond = (int) ( bytesread * totalSecond / length );
+			int curSecond = (int) ( readBytes * totalSecond / length );
 
 			// シークバーの位置を更新しなくてはならない場合
 			if( curSeekPos != m_SeekBar.getValue() && !m_SeekBar.getValueIsAdjusting() ){
@@ -130,11 +112,17 @@ public class PlayController extends IComponent implements ActionListener
 				m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Update Time", options );
 				m_PrevSec = curSecond;
 			}
-
-
 		}
-		public void setController( BasicController controller )
+
+		public void statusUpdated( StatusFlag status )
 		{
+			if( status == StatusFlag.EOF ){
+				if( m_PlayModeBtn.getActionCommand().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
+					//m_Player.close();
+					m_Player.stop();
+					playMusic();
+				}
+			}
 		}
 	};
 
@@ -144,41 +132,26 @@ public class PlayController extends IComponent implements ActionListener
 		{
 			if( event.getSource().equals( m_SeekBar ) ){
 				if( !m_SeekBar.getValueIsAdjusting() ){
-					try{
-						// 音楽全体の長さを取得
-						long bytes = Long.parseLong( m_AudioInfo.get( "audio.length.bytes" ).toString() );
-						// シークバーの位置から、再生位置を取得
-						long seek = bytes * m_SeekBar.getValue() / m_SeekBar.getMaximum();
-						// シーク
-						m_Player.removeBasicPlayerListener( m_BasicListener );
-						m_Player.seek( seek );
-						m_Player.addBasicPlayerListener( m_BasicListener );
-					}
-					catch( BasicPlayerException e ){
-						e.printStackTrace();
-					}
+					// 音楽全体の長さを取得
+					long bytes = m_AudioInfo.m_Length;
+					// シークバーの位置から、再生位置を取得
+					long seek = bytes * m_SeekBar.getValue() / m_SeekBar.getMaximum();
+					// シーク
+					m_Player.removeMusicPlayerListener();
+					m_Player.seek( seek );
+					m_Player.setMusicPlayerListener( m_MusicPlayerListener );
 				}
 			}
 			else if( event.getSource().equals( m_VolumeAdjBar ) ){
 				if( !m_VolumeAdjBar.getValueIsAdjusting() ){
 					double volume = 1.0 * m_VolumeAdjBar.getValue() / m_VolumeAdjBar.getMaximum();
-					try {
-						m_Player.setGain( volume );
-					}
-					catch( BasicPlayerException e ){
-						e.printStackTrace();
-					}
+					m_Player.setVolume( volume );
 				}
 			}
 			else if( event.getSource().equals( m_PanAdjBar ) ){
 				if( !m_PanAdjBar.getValueIsAdjusting() ){
 					double pan = -1.0 + 2.0 * m_PanAdjBar.getValue() / m_PanAdjBar.getMaximum();
-					try {
-						m_Player.setPan( pan );
-					}
-					catch( BasicPlayerException e ){
-						e.printStackTrace();
-					}
+					m_Player.setPan( pan );
 				}
 			}
 		}
@@ -274,15 +247,11 @@ public class PlayController extends IComponent implements ActionListener
 		m_PlayCtrl.add( m_PlayTimeLbl );
 
 		// 音楽プレイヤーの作成
-		m_Player = new BasicPlayer();
-		m_Player.addBasicPlayerListener( m_BasicListener );
-		try{
-			m_Player.setGain( 1.0 * m_VolumeAdjBar.getValue() / m_VolumeAdjBar.getMaximum() );
-			m_Player.setPan( -1.0 + 2.0 * m_PanAdjBar.getValue() / m_PanAdjBar.getMaximum() );
-		}
-		catch( BasicPlayerException e ){
-			e.printStackTrace();
-		}
+		//m_Player = new BasicPlayer();
+		m_Player = new MusicPlayer();
+		m_Player.setMusicPlayerListener( m_MusicPlayerListener );
+		m_Player.setVolume( 1.0 * m_VolumeAdjBar.getValue() / m_VolumeAdjBar.getMaximum() );
+		m_Player.setPan( -1.0 + 2.0 * m_PanAdjBar.getValue() / m_PanAdjBar.getMaximum() );
 
 		m_MusicTitleBoard = new JTextArea();
 		m_MusicTitleBoard.setEditable( false );
@@ -291,7 +260,7 @@ public class PlayController extends IComponent implements ActionListener
 		m_PlayCtrl.add( m_MusicTitleBoard );
 
 
-		m_MusicPlayer = new MusicPlayer();
+		/*m_MusicPlayer = new MusicPlayer();
 		m_MusicPlayer.open( "202_level1.mp3" );
 		m_MusicPlayer.play();
 		try {
@@ -307,7 +276,7 @@ public class PlayController extends IComponent implements ActionListener
 			// TODO 自動生成された catch ブロック
 			e.printStackTrace();
 		}
-		m_MusicPlayer.resume();
+		m_MusicPlayer.resume();*/
 
 		m_Paused = false;
 
@@ -322,45 +291,35 @@ public class PlayController extends IComponent implements ActionListener
 			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, "Play Button Pushed" );
 		}
 		else if( cmd.equals( STOP_BUTTON_NAME ) ){
-			try{
-				m_Player.stop();
-				ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button.png" );
-				m_PlayBtn.setIcon( icon );
-				if( m_Paused ){
-					icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button.png" );
-					m_PauseBtn.setIcon( icon );
-					m_Paused = false;
-				}
-				m_MusicTitleBoard.setText( "" );
+			m_Player.stop();
+			ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button.png" );
+			m_PlayBtn.setIcon( icon );
+			if( m_Paused ){
+				icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button.png" );
+				m_PauseBtn.setIcon( icon );
+				m_Paused = false;
 			}
-			catch( BasicPlayerException e ){
-				e.printStackTrace();
-			}
+			m_MusicTitleBoard.setText( "" );
 			m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_CONTROLLER, Constant.MsgID.MSG_ID_STOP.ordinal(), null );
 		}
 		else if( cmd.equals( PAUSE_BUTTON_NAME ) ){
-			try{
-				// 再生状態 -> 一時停止状態
-				if( !m_Paused && m_Player.getStatus() == BasicPlayer.PLAYING ){
-					m_Player.pause();
-					ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button.png" );
-					m_PlayBtn.setIcon( icon );
-					icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button_rev.png" );
-					m_PauseBtn.setIcon( icon );
-					m_Paused = true;
-				}
-				// 一時停止状態 -> 再生状態
-				else if( m_Paused ){
-					m_Player.resume();
-					ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button_rev.png" );
-					m_PlayBtn.setIcon( icon );
-					icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button.png" );
-					m_PauseBtn.setIcon( icon );
-					m_Paused = false;
-				}
+			// 再生状態 -> 一時停止状態
+			if( !m_Paused && m_Player.getStatus() == StatusFlag.PLAY ){
+				m_Player.pause();
+				ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button.png" );
+				m_PlayBtn.setIcon( icon );
+				icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button_rev.png" );
+				m_PauseBtn.setIcon( icon );
+				m_Paused = true;
 			}
-			catch( BasicPlayerException e ){
-				e.printStackTrace();
+			// 一時停止状態 -> 再生状態
+			else if( m_Paused ){
+				m_Player.resume();
+				ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button_rev.png" );
+				m_PlayBtn.setIcon( icon );
+				icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/pause_button.png" );
+				m_PauseBtn.setIcon( icon );
+				m_Paused = false;
 			}
 		}
 		else if( cmd.equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_ONCE.ordinal() ] ) ){
@@ -388,17 +347,11 @@ public class PlayController extends IComponent implements ActionListener
 		switch( from ){
 			case COM_ID_PLAY_LIST:
 				if( msg == Constant.MsgID.MSG_ID_PLAY.ordinal() ){
-					File file = new File( options[ 0 ] );
-					try{
-						m_Player.open( file );
-						playMusic();
-						ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button_rev.png" );
-						m_PlayBtn.setIcon( icon );
-						m_Paused = false;
-					}
-					catch( BasicPlayerException e ){
-						e.printStackTrace();
-					}
+					m_Player.open( options[ 0 ] );
+					playMusic();
+					ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button_rev.png" );
+					m_PlayBtn.setIcon( icon );
+					m_Paused = false;
 					m_PrevSec = -1;
 					m_MusicTitleBoard.setText( options[ 2 ] );
 				}
@@ -416,13 +369,8 @@ public class PlayController extends IComponent implements ActionListener
 	{
 		double volume = 1.0 * m_VolumeAdjBar.getValue() / m_VolumeAdjBar.getMaximum();
 		double pan = -1.0 + 2.0 * m_PanAdjBar.getValue() / m_PanAdjBar.getMaximum();
-		try{
-			m_Player.play();
-			m_Player.setGain( volume );
-			m_Player.setPan( pan );
-		}
-		catch( BasicPlayerException e ){
-			e.printStackTrace();
-		}
+		m_Player.play();
+		m_Player.setVolume( volume );
+		m_Player.setPan( pan );
 	}
 }
