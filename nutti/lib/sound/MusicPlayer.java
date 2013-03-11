@@ -17,6 +17,7 @@ public class MusicPlayer
 	public enum StatusFlag
 	{
 		PLAY,
+		STOPING,
 		STOP,
 		EOF,
 		PAUSE,
@@ -200,8 +201,8 @@ public class MusicPlayer
 
 	public AudioInfo getAudioInfo()
 	{
-		return m_AudioInfo;
-		//return m_Player.getAudioInfo();
+		//return m_AudioInfo;
+		return m_Player.getAudioInfo();
 	}
 
 	public void setPan( double pan )

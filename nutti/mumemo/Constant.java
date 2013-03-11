@@ -15,6 +15,7 @@ public class Constant
 		COM_ID_COMMENT_PLAYER,
 		COM_ID_APP_MAIN,
 		COM_ID_PLAY_LIST,
+		COM_ID_MENU,
 		COM_ID_TOTAL
 	}
 

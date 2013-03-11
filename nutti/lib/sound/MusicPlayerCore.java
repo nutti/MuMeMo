@@ -122,7 +122,7 @@ public class MusicPlayerCore implements Runnable
 
 	private void playRawWavData( AudioFormat fmt ) throws LineUnavailableException, IOException
 	{
-		byte[] data = new byte[ 4096 ];
+		byte[] data = new byte[ 16000 ];
 		m_SrcDataLine = getSrcLine( fmt );		// オーディオバッファ
 		if( m_SrcDataLine != null ){
 			// 再生開始
@@ -176,8 +176,12 @@ public class MusicPlayerCore implements Runnable
 			m_SrcDataLine.stop();
 			m_SrcDataLine.close();
 			m_AudioStream.close();
+			m_SrcDataLine = null;
 			if( readBytes == -1 ){
 				updateStatus( StatusFlag.EOF );
+			}
+			else if( m_Status == StatusFlag.STOPING ){
+				updateStatus( StatusFlag.STOP );
 			}
 		}
 	}
@@ -205,6 +209,9 @@ public class MusicPlayerCore implements Runnable
 				}
 				if( m_Status == StatusFlag.EOF ){
 				}
+				if( m_Status == StatusFlag.STOPING ){
+					updateStatus( StatusFlag.STOP );
+				}
 				Thread.sleep( 1 );
 			}
 		}
@@ -221,18 +228,40 @@ public class MusicPlayerCore implements Runnable
 
 	public void play()
 	{
-		stop();
+		try {
+			synchronized( m_AudioStream ){
+				m_AudioStreamOrig = AudioSystem.getAudioInputStream( m_File );
+				m_AudioStream = AudioSystem.getAudioInputStream( m_AudioFmt, m_AudioStreamOrig );
+			}
+		}
+		catch( UnsupportedAudioFileException e ){
+			e.printStackTrace();
+		}
+		catch( IOException e ){
+			e.printStackTrace();
+		}
+
 		updateStatus( StatusFlag.PLAY );
 	}
 
 	public void stop()
 	{
 		// ※要修正！！ ストップ関連がおかしいために、リピート再生が出来ない
-		updateStatus( StatusFlag.STOP );
+		if( m_Status == StatusFlag.STOP || m_Status == StatusFlag.EOF ){
+			updateStatus( StatusFlag.STOP );
+			return;
+		}
+		updateStatus( StatusFlag.STOPING );
+		while( m_Status != StatusFlag.STOP ){
+
+		}
 	}
 
 	public void open( String fileName )
 	{
+
+		close();
+
 		m_FileName = fileName;
 
 		try{
@@ -301,13 +330,20 @@ public class MusicPlayerCore implements Runnable
 			e.printStackTrace();
 		}
 
-		m_MusicPlayerListner.opened( m_AudioInfo );
+		if( m_MusicPlayerListner != null ){
+			m_MusicPlayerListner.opened( m_AudioInfo );
+		}
 	}
 
 	public void close()
 	{
 		try{
-			m_AudioStreamOrig.close();
+			stop();
+			if( m_AudioStreamOrig != null ){
+				m_AudioStreamOrig.close();
+			}
+			m_PanCtrl = null;
+			m_VolumeCtrl = null;
 		}
 		catch( IOException e ){
 			e.printStackTrace();
@@ -324,6 +360,8 @@ public class MusicPlayerCore implements Runnable
 			try{
 				m_AudioStreamOrig = AudioSystem.getAudioInputStream( m_File );
 				m_AudioStream = AudioSystem.getAudioInputStream( m_AudioFmt, m_AudioStreamOrig );
+				m_PanCtrl = null;
+				m_VolumeCtrl = null;
 				while( skippedTotal < pos ){
 					skipped = m_AudioStream.skip( pos - skippedTotal );
 
@@ -362,6 +400,7 @@ public class MusicPlayerCore implements Runnable
 		return m_AudioInfo;
 	}
 
+	// パンの設定（スレッドセーフ）
 	public void setPan( double pan )
 	{
 		if( m_PanCtrl == null ){
@@ -375,6 +414,7 @@ public class MusicPlayerCore implements Runnable
 		m_PanCtrl.setValue( (float) pan );
 	}
 
+	// 音量の設定（スレッドセーフ）
 	public void setVolume( double volume )
 	{
 		if( m_VolumeCtrl == null ){
@@ -394,11 +434,13 @@ public class MusicPlayerCore implements Runnable
 
 	}
 
+	// 状態の取得
 	public StatusFlag getStatus()
 	{
 		return m_Status;
 	}
 
+	// 状態の更新
 	private void updateStatus( StatusFlag status )
 	{
 		m_Status = status;

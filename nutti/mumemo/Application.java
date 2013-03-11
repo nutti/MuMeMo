@@ -27,6 +27,7 @@ public class Application
 	private MetaDataHandler			m_MetaDataHandler;	// メタデータハンドラ
 	private CommentFileHandler		m_CommFileHandler;	// コメントファイルハンドラ
 	private CommentPlayer			m_CommPlayer;		// コメント表示
+	private Menu					m_Menu;				// メニュー
 	private PlayList				m_PlayList;			// プレイリスト
 
 	private MultipleRunChecker		m_Checker;			// 多重起動チェッカ
@@ -90,6 +91,9 @@ public class Application
 
 		m_PlayList = new PlayList( m_MainWnd, m_MsgMediator, m_MetaDataHandler );
 		m_MsgMediator.addComponent( m_PlayList );
+
+		m_Menu = new Menu( m_MainWnd, m_MsgMediator );
+		m_MsgMediator.addComponent( m_Menu );
 
 		m_MainWnd.getContentPane().setBackground( Color.BLACK );
 		m_MainWnd.setVisible( true );

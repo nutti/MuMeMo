@@ -12,7 +12,11 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import javax.swing.JSlider;
 import javax.swing.JTextArea;
+import javax.swing.border.Border;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import nutti.lib.sound.IMusicPlayerListener;
 import nutti.lib.sound.MusicPlayer;
@@ -44,9 +48,9 @@ public class PlayController extends IComponent implements ActionListener
 	private JButton			m_PauseBtn;				// 一時停止ボタン
 	private JButton			m_PlayModeBtn;			// 再生モードボタン
 
-	private JScrollBar		m_SeekBar;				// シークバー
-	private JScrollBar		m_VolumeAdjBar;			// 音量調整バー
-	private JScrollBar		m_PanAdjBar;			// パン調整バー
+	private JSlider			m_SeekBar;				// シークバー
+	private JSlider			m_VolumeAdjBar;			// 音量調整バー
+	private JSlider			m_PanAdjBar;			// パン調整バー
 	private JLabel			m_PlayTimeLbl;			// 再生時間
 
 
@@ -92,7 +96,7 @@ public class PlayController extends IComponent implements ActionListener
 
 			// シークバーの位置を更新しなくてはならない場合
 			if( curSeekPos != m_SeekBar.getValue() && !m_SeekBar.getValueIsAdjusting() ){
-				m_SeekBar.removeAdjustmentListener( m_AdjListener );
+				m_SeekBar.removeChangeListener( m_ChangeListener );
 
 				// 音楽の長さを取得
 				int dispTotMin = (int) ( totalSecond / 60 );
@@ -102,7 +106,7 @@ public class PlayController extends IComponent implements ActionListener
 
 				m_SeekBar.setValue( curSeekPos );
 				m_PlayTimeLbl.setText( String.format( "%1$02d:%2$02d / %3$02d:%4$02d", dispCurMin, dispCurSec, dispTotMin, dispTotSec ) );
-				m_SeekBar.addAdjustmentListener( m_AdjListener );
+				m_SeekBar.addChangeListener( m_ChangeListener );
 
 			}
 
@@ -126,9 +130,9 @@ public class PlayController extends IComponent implements ActionListener
 		}
 	};
 
-	private AdjustmentListener		m_AdjListener = new AdjustmentListener()
+	private ChangeListener		m_ChangeListener = new ChangeListener()
 	{
-		public void adjustmentValueChanged( AdjustmentEvent event )
+		public void stateChanged( ChangeEvent event )
 		{
 			if( event.getSource().equals( m_SeekBar ) ){
 				if( !m_SeekBar.getValueIsAdjusting() ){
@@ -174,7 +178,7 @@ public class PlayController extends IComponent implements ActionListener
 		final int BUTTON_HEIGHT		= 20;
 		final int BUTTON_OFFSET_X	= 0;
 
-		int posX = 280;
+		int posX = 290;
 		int posY = 10;
 
 		// 再生ボタン作成
@@ -224,21 +228,24 @@ public class PlayController extends IComponent implements ActionListener
 		m_PlayCtrl.add( m_PlayModeBtn );
 
 		// 音量調整バー作成
-		m_VolumeAdjBar = new JScrollBar( JScrollBar.HORIZONTAL, 500, 0, 0, 1000 );
-		m_VolumeAdjBar.setBounds( 10, 38, 110, 10 );
-		m_VolumeAdjBar.addAdjustmentListener( m_AdjListener );
+		m_VolumeAdjBar = new JSlider( JSlider.HORIZONTAL, 0, 1000, 500 );
+		m_VolumeAdjBar.setBounds( 10, 38, 125, 10 );
+		m_VolumeAdjBar.addChangeListener( m_ChangeListener );
+		m_VolumeAdjBar.setBackground( Color.BLACK );
 		m_PlayCtrl.add( m_VolumeAdjBar );
 
 		// パン調整バー作成
-		m_PanAdjBar = new JScrollBar( JScrollBar.HORIZONTAL, 500, 0, 0, 1000 );
-		m_PanAdjBar.setBounds( 130, 38, 110, 10 );
-		m_PanAdjBar.addAdjustmentListener( m_AdjListener );
+		m_PanAdjBar = new JSlider( JSlider.HORIZONTAL, 0, 1000, 500 );
+		m_PanAdjBar.setBounds( 155, 38, 125, 10 );
+		m_PanAdjBar.addChangeListener( m_ChangeListener );
+		m_PanAdjBar.setBackground( Color.BLACK );
 		m_PlayCtrl.add( m_PanAdjBar );
 
 		// シークバー作成
-		m_SeekBar = new JScrollBar( JScrollBar.HORIZONTAL, 0, 0, 0, 1000 );
+		m_SeekBar = new JSlider( JSlider.HORIZONTAL, 0, 1000, 0 );
 		m_SeekBar.setBounds( 10, 50, 270, 10 );
-		m_SeekBar.addAdjustmentListener( m_AdjListener );
+		m_SeekBar.addChangeListener( m_ChangeListener );
+		m_SeekBar.setBackground( Color.BLACK );
 		m_PlayCtrl.add( m_SeekBar );
 
 		// 再生時間表示ラベル作成
@@ -258,25 +265,6 @@ public class PlayController extends IComponent implements ActionListener
 		m_MusicTitleBoard.setBounds( 10, 10, 260, 20 );
 		m_MusicTitleBoard.setBackground( Color.white );
 		m_PlayCtrl.add( m_MusicTitleBoard );
-
-
-		/*m_MusicPlayer = new MusicPlayer();
-		m_MusicPlayer.open( "202_level1.mp3" );
-		m_MusicPlayer.play();
-		try {
-			Thread.sleep( 1000 );
-		} catch (InterruptedException e) {
-			// TODO 自動生成された catch ブロック
-			e.printStackTrace();
-		}
-		m_MusicPlayer.pause();
-		try {
-			Thread.sleep( 2000 );
-		} catch (InterruptedException e) {
-			// TODO 自動生成された catch ブロック
-			e.printStackTrace();
-		}
-		m_MusicPlayer.resume();*/
 
 		m_Paused = false;
 
@@ -347,6 +335,7 @@ public class PlayController extends IComponent implements ActionListener
 		switch( from ){
 			case COM_ID_PLAY_LIST:
 				if( msg == Constant.MsgID.MSG_ID_PLAY.ordinal() ){
+					m_Player.stop();
 					m_Player.open( options[ 0 ] );
 					playMusic();
 					ImageIcon icon = new ImageIcon( Constant.SKIN_FILES_DIR + "/" + "default/play_button_rev.png" );
