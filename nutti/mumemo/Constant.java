@@ -25,6 +25,7 @@ public class Constant
 		MSG_ID_STOP,
 		MSG_ID_APP_INIT,
 		MSG_ID_APP_TERM,
+		MSG_ID_SKIN_CHANGED,
 	}
 
 	public static final String COMMENT_FILE_SUFFIX		= ".comm";

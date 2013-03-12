@@ -16,19 +16,18 @@ public class ImagedPanel extends JPanel
 {
 	private BufferedImage			m_BGImage;				// 背景画像
 
-	public ImagedPanel( String path )
+	public ImagedPanel( String filePath )
 	{
 		super();
-		try{
-			m_BGImage = ImageIO.read( new File( path ) );
-		}
-		catch( IOException e ){
-			e.printStackTrace();
-		}
+		setImage( filePath );
 	}
 
 	public void paintComponent( Graphics graphics )
 	{
+		if( m_BGImage == null ){
+			return;
+		}
+		
 		Graphics2D g = ( Graphics2D ) graphics;
 
 		double imgW = m_BGImage.getWidth();
@@ -42,5 +41,16 @@ public class ImagedPanel extends JPanel
 		AffineTransform trans = AffineTransform.getScaleInstance( sx, sy );
 
 		g.drawImage( m_BGImage, trans, this );
+	}
+
+	public void setImage( String filePath )
+	{
+		try{
+			m_BGImage = ImageIO.read( new File( filePath ) );
+		}
+		catch( IOException e ){
+			e.printStackTrace();
+			m_BGImage = null;
+		}
 	}
 }

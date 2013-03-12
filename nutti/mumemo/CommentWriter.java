@@ -22,6 +22,7 @@ import javazoom.jlgui.basicplayer.BasicPlayerException;
 import nutti.lib.ImagedPanel;
 import nutti.lib.Util;
 import nutti.mumemo.Constant.ComponentID;
+import nutti.mumemo.SkinConfigFile.SkinID;
 
 public class CommentWriter extends IComponent implements ActionListener
 {
@@ -77,7 +78,7 @@ public class CommentWriter extends IComponent implements ActionListener
 		m_CommFileHandler = comm;
 
 		// コメントライター領域
-		m_CommWriter = new ImagedPanel( Constant.SKIN_FILES_DIR + "/" + "default/comm_writer.png" );
+		m_CommWriter = new ImagedPanel( getSkinFilePath( SkinID.SKIN_ID_COMM_WRITER_BG ) );
 		m_CommWriter.setBounds( 390, 90, 200, 200 );
 		m_CommWriter.setBackground( Color.WHITE );
 		m_CommWriter.setLayout( null );
@@ -114,6 +115,8 @@ public class CommentWriter extends IComponent implements ActionListener
 		m_CreateTagBtn.addActionListener( this );
 		m_CreateTagBtn.setActionCommand( m_CreateTagBtn.getText() );
 		m_CommWriter.add( m_CreateTagBtn );
+
+		setupSkins();
 
 		mainWnd.add( m_CommWriter );
 	}
@@ -209,6 +212,11 @@ public class CommentWriter extends IComponent implements ActionListener
 					m_CommFileHandler.closeFile();
 				}
 				break;
+			case COM_ID_MENU:
+				if( msg == Constant.MsgID.MSG_ID_SKIN_CHANGED.ordinal() ){
+					setupSkins();
+				}
+				break;
 			default:
 				break;
 		}
@@ -218,6 +226,17 @@ public class CommentWriter extends IComponent implements ActionListener
 	{
 		m_TagSelectList.removeAllItems();
 		m_TagSelectList.addItem( "Select Tags" );
+	}
+
+	private String getSkinFilePath( SkinID id )
+	{
+		return Constant.SKIN_FILES_DIR + "/" + Config.getInst().getSkinName() + "/" + SkinConfigFile.getInst().getSkinFileName( id );
+	}
+
+	private void setupSkins()
+	{
+		m_CommWriter.setImage( getSkinFilePath( SkinID.SKIN_ID_COMM_WRITER_BG ) );
+		m_CommWriter.repaint();
 	}
 
 }

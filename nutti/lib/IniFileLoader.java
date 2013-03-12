@@ -23,7 +23,7 @@ public class IniFileLoader
 	public void load( String filePath, String regex )
 	{
 		try{
-			File file = new File( Constant.CONFIG_FILE_NAME );
+			File file = new File( filePath );
 			FileInputStream stream = new FileInputStream( file );
 			BufferedReader reader = new BufferedReader( new InputStreamReader( stream ) );
 
@@ -47,5 +47,10 @@ public class IniFileLoader
 	public String getValue( String key )
 	{
 		return m_Values.get( key );
+	}
+
+	public Map < String, String > getValues()
+	{
+		return m_Values;
 	}
 }

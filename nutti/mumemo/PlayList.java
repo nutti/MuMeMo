@@ -38,6 +38,7 @@ import javazoom.jlgui.basicplayer.BasicPlayerListener;
 
 import nutti.lib.ImagedPanel;
 import nutti.mumemo.Constant.ComponentID;
+import nutti.mumemo.SkinConfigFile.SkinID;
 
 public class PlayList extends IComponent
 {
@@ -122,7 +123,7 @@ public class PlayList extends IComponent
 		m_MetaDataHandler = meta;
 
 		// プレイリスト領域
-		m_PlayList = new ImagedPanel( Constant.SKIN_FILES_DIR + "/" + "default/play_list.png" );
+		m_PlayList = new ImagedPanel( getSkinFilePath( SkinID.SKIN_ID_PLAY_LIST_BG ) );
 		m_PlayList.setBounds( 10, 90, 370, 200 );
 		m_PlayList.setBackground( Color.YELLOW );
 		m_PlayList.setLayout( null );
@@ -143,12 +144,7 @@ public class PlayList extends IComponent
 		m_MusicListScrollBar.getViewport().setBackground( Color.BLACK );
 		m_MusicListScrollBar.setDropTarget( m_DropTarget );
 		m_MusicListScrollBar.setBorder( new EmptyBorder( 0, 0, 0, 0 ) );
-		//m_MusicList.setBorder( null );
 		m_PlayList.add( m_MusicListScrollBar );
-
-
-
-
 
 		// プレイリストファイルからデータの読み込みを行う。
 		m_PlayListFileHandler = new PlayListFileHandler();
@@ -160,6 +156,8 @@ public class PlayList extends IComponent
 								Long.toString( totalSec / 60 ) + ":" + Long.toString( totalSec % 60 ) };
 			m_DefTblModel.addRow( items );
 		}
+
+		setupSkins();
 
 		mainWnd.add( m_PlayList );
 	}
@@ -196,6 +194,11 @@ public class PlayList extends IComponent
 					m_PlayListFileHandler.closeFile();
 				}
 				break;
+			case COM_ID_MENU:
+				if( msg == Constant.MsgID.MSG_ID_SKIN_CHANGED.ordinal() ){
+					setupSkins();
+				}
+				break;
 			default:
 				break;
 		}
@@ -224,6 +227,15 @@ public class PlayList extends IComponent
 		m_MsgMediator.postMsg( ComponentID.COM_ID_PLAY_LIST, Constant.MsgID.MSG_ID_PLAY.ordinal(), options );
 	}
 
+	private String getSkinFilePath( SkinID id )
+	{
+		return Constant.SKIN_FILES_DIR + "/" + Config.getInst().getSkinName() + "/" + SkinConfigFile.getInst().getSkinFileName( id );
+	}
 
+	private void setupSkins()
+	{
+		m_PlayList.setImage( getSkinFilePath( SkinID.SKIN_ID_PLAY_LIST_BG ) );
+		m_PlayList.repaint();
+	}
 
 }

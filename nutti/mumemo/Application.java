@@ -47,8 +47,11 @@ public class Application
 		}
 
 		Config.getInst().load();
+		SkinConfigFile.getInst().load(	Constant.SKIN_FILES_DIR + "/" +
+										Config.getInst().getSkinName() + "/"  +
+										Config.getInst().getSkinName() + ".ini" );
 
-		/*try{
+		try{
 			UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
 		}
 		catch(ClassNotFoundException e ){
@@ -62,7 +65,7 @@ public class Application
 		}
 		catch( UnsupportedLookAndFeelException e ){
 			e.printStackTrace();
-		}*/
+		}
 
 		m_MainWnd = new JFrame( APP_TITLE );	// タイトルの設定
 		m_MainWnd.setBounds( WIN_BOUND );		// ウィンドウサイズの設定
