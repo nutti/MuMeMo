@@ -1,6 +1,7 @@
 package nutti.mumemo;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -18,12 +19,14 @@ import javax.swing.JTable;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
+import nutti.lib.ImagedPanel;
 import nutti.lib.Util;
 import nutti.mumemo.Constant.ComponentID;
+import nutti.mumemo.SkinConfigFile.SkinID;
 
 public class CommentPlayer extends IComponent
 {
-	private JPanel					m_CommPlayer;					// コメント表示
+	private ImagedPanel				m_CommPlayer;					// コメント表示
 	private JComboBox				m_TagSelectList;				// 選択可能なタグリスト
 	private JTable					m_CommList;						// コメント一覧
 	private DefaultTableModel		m_DefTblModel;					// JList項目追加用
@@ -40,14 +43,14 @@ public class CommentPlayer extends IComponent
 		m_CommFileHandler = comm;
 
 		// コメントライター領域
-		m_CommPlayer = new JPanel();
+		m_CommPlayer = new ImagedPanel( getSkinFilePath( SkinID.SKIN_ID_COMMENT_BG ) );
 		m_CommPlayer.setBounds( 10, 300, 580, 150 );
 		m_CommPlayer.setBackground( Color.BLACK );
 		m_CommPlayer.setLayout( null );
 
 		// 選択可能なタグリスト
 		m_TagSelectList = new JComboBox();
-		m_TagSelectList.setBounds( 10, 10, 120, 20 );
+		m_TagSelectList.setBounds( 10, 25, 120, 20 );
 		m_TagSelectList.addItem( "Select Tags" );
 		m_CommPlayer.add( m_TagSelectList );
 
@@ -55,16 +58,18 @@ public class CommentPlayer extends IComponent
 		String[] colTitles = { "Time", "Date", "Author", "Comment" };
 		m_DefTblModel = new DefaultTableModel( colTitles, 0 );
 		m_CommList = new JTable( m_DefTblModel );
-		m_CommList.setBounds( 10, 40, 560, 100 );
+		m_CommList.setBounds( 10, 45, 560, 100 );
 		m_CommList.setForeground( Color.WHITE );
 		m_CommList.setBackground( Color.BLACK );
 		m_CommList.setDefaultEditor( Object.class, null );
+		m_CommList.getTableHeader().setPreferredSize( new Dimension( 10, 18 ) );
 		m_CommListScrollBar = new JScrollPane( m_CommList );
-		m_CommListScrollBar.setBounds( 10, 40, 560, 100 );
+		m_CommListScrollBar.setBounds( 10, 50, 560, 90 );
 		m_CommListScrollBar.getViewport().setBackground( Color.BLACK );
 		m_CommListScrollBar.setBorder( new EmptyBorder( 0, 0, 0, 0 ) );
 		m_CommPlayer.add( m_CommListScrollBar );
 
+		setupSkins();
 
 		mainWnd.add( m_CommPlayer );
 	}
@@ -128,6 +133,11 @@ public class CommentPlayer extends IComponent
 					cleanupTags();
 				}
 				break;
+			case COM_ID_MENU:
+				if( msg == Constant.MsgID.MSG_ID_SKIN_CHANGED.ordinal() ){
+					setupSkins();
+				}
+				break;
 			default:
 				break;
 		}
@@ -145,5 +155,16 @@ public class CommentPlayer extends IComponent
 		for( int i = 0; i < m_DefTblModel.getRowCount(); ++i ){
 			m_DefTblModel.removeRow( i );
 		}
+	}
+
+	private String getSkinFilePath( SkinID id )
+	{
+		return Constant.SKIN_FILES_DIR + "/" + Config.getInst().getSkinName() + "/" + SkinConfigFile.getInst().getSkinFileName( id );
+	}
+
+	private void setupSkins()
+	{
+		m_CommPlayer.setImage( getSkinFilePath( SkinID.SKIN_ID_COMMENT_BG ) );
+		m_CommPlayer.repaint();
 	}
 }

@@ -1,10 +1,12 @@
 package nutti.mumemo;
 
 import java.awt.Color;
+import java.awt.Insets;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.border.EtchedBorder;
 
 import nutti.mumemo.Constant.ComponentID;
 
@@ -26,6 +28,10 @@ public class MusicInfoBoard extends IComponent
 		m_InfoTextArea = new JTextArea();
 		m_InfoTextArea.setEditable( false );
 		m_InfoTextArea.setBounds( 10, 10, 180, 50 );
+		m_InfoTextArea.setBackground( Color.BLACK );
+		m_InfoTextArea.setForeground( Color.WHITE );
+		m_InfoTextArea.setBorder( new EtchedBorder( EtchedBorder.RAISED, Color.WHITE, Color.GRAY ) );
+		m_InfoTextArea.setFont( m_InfoTextArea.getFont().deriveFont( 11.0f ) );
 		m_MusicInfoBoard.add( m_InfoTextArea );
 
 

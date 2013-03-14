@@ -3,7 +3,7 @@ package nutti.mumemo;
 public class Constant
 {
 	public static final long		MAJOR_VERSION	= 0;
-	public static final long		MINOR_VERSION	= 0 << 16 | 0;
+	public static final long		MINOR_VERSION	= 10 << 8 | 0;
 
 	public static final long		MUMEMO_VERSION	= MAJOR_VERSION << 16 | MINOR_VERSION;
 

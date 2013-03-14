@@ -15,6 +15,7 @@ import javax.swing.JScrollBar;
 import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -181,7 +182,7 @@ public class PlayController extends IComponent implements ActionListener
 		final int BUTTON_HEIGHT		= 20;
 		final int BUTTON_OFFSET_X	= 0;
 
-		int posX = 290;
+		int posX = 285;
 		int posY = 10;
 
 		// 再生ボタン作成
@@ -261,8 +262,11 @@ public class PlayController extends IComponent implements ActionListener
 
 		m_MusicTitleBoard = new JTextArea();
 		m_MusicTitleBoard.setEditable( false );
-		m_MusicTitleBoard.setBounds( 10, 10, 260, 20 );
-		m_MusicTitleBoard.setBackground( Color.white );
+		m_MusicTitleBoard.setBounds( 15, 10, 260, 20 );
+		m_MusicTitleBoard.setBackground( Color.BLACK );
+		m_MusicTitleBoard.setForeground( Color.WHITE );
+		m_MusicTitleBoard.setBorder( new EtchedBorder( EtchedBorder.RAISED, Color.WHITE, Color.GRAY ) );
+		m_MusicTitleBoard.setFont( m_MusicTitleBoard.getFont().deriveFont( 11.0f ) );
 		m_PlayCtrl.add( m_MusicTitleBoard );
 
 		m_Paused = false;

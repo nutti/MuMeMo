@@ -10,12 +10,15 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.border.EtchedBorder;
 
 import javazoom.jlgui.basicplayer.BasicPlayerException;
 
@@ -84,36 +87,45 @@ public class CommentWriter extends IComponent implements ActionListener
 		m_CommWriter.setLayout( null );
 
 		// コメント入力エリア
-		m_CommInputArea = new JTextArea( "コメントを入力してください" );
-		m_CommInputArea.setBounds( 10, 30, 180, 100 );
-		m_CommInputArea.setBackground( Color.GRAY );
+		m_CommInputArea = new JTextArea();
+		m_CommInputArea.setBounds( 20, 30, 160, 100 );
 		m_CommInputArea.addMouseListener( m_CommInputAreaML );
+		m_CommInputArea.setLineWrap( true );
+		m_CommInputArea.setBackground( Color.BLACK );
+		m_CommInputArea.setForeground( Color.WHITE );
+		m_CommInputArea.setBorder( new EtchedBorder( EtchedBorder.RAISED, Color.WHITE, Color.GRAY ) );
+		m_CommInputArea.setFont( m_CommInputArea.getFont().deriveFont( 11.0f ) );
+		m_CommInputArea.setText( "Input Comment Here!" );
 		m_CommWriter.add( m_CommInputArea );
 		m_ClickedCommInputAreaFirst = false;
 
 		// コメント入力ボタン
-		m_CommButton = new JButton( COMMENT_BUTTON_NAME );
-		m_CommButton.setBounds( 140, 140, 50, 20 );
+		m_CommButton = new JButton();
+		m_CommButton.setBounds( 160, 140, 20, 20 );
 		m_CommButton.addActionListener( this );
-		m_CommButton.setActionCommand( m_CommButton.getText() );
+		m_CommButton.setActionCommand( COMMENT_BUTTON_NAME );
+		m_CommButton.setContentAreaFilled( false );
+		m_CommButton.setBorderPainted( false );
 		m_CommWriter.add( m_CommButton );
 
 		// 選択可能なタグリスト
 		m_TagSelectList = new JComboBox();
-		m_TagSelectList.setBounds( 10, 140, 120, 20 );
+		m_TagSelectList.setBounds( 20, 140, 130, 20 );
 		m_TagSelectList.addItem( "Select Tags" );
 		m_CommWriter.add( m_TagSelectList );
 
 		// 新しいタグ名入力エリア
 		m_NewTagNameInputArea = new JTextField();
-		m_NewTagNameInputArea.setBounds( 10, 170, 120, 20 );
+		m_NewTagNameInputArea.setBounds( 20, 170, 130, 20 );
 		m_CommWriter.add( m_NewTagNameInputArea );
 
 		// 新しいタグ作成ボタン
-		m_CreateTagBtn = new JButton( CREATE_TAG_BUTTON_NAME );
-		m_CreateTagBtn.setBounds( 140, 170, 50, 20 );
+		m_CreateTagBtn = new JButton();
+		m_CreateTagBtn.setBounds( 160, 170, 20, 20 );
 		m_CreateTagBtn.addActionListener( this );
-		m_CreateTagBtn.setActionCommand( m_CreateTagBtn.getText() );
+		m_CreateTagBtn.setActionCommand( CREATE_TAG_BUTTON_NAME );
+		m_CreateTagBtn.setContentAreaFilled( false );
+		m_CreateTagBtn.setBorderPainted( false );
 		m_CommWriter.add( m_CreateTagBtn );
 
 		setupSkins();
@@ -235,6 +247,8 @@ public class CommentWriter extends IComponent implements ActionListener
 
 	private void setupSkins()
 	{
+		m_CommButton.setIcon( new ImageIcon( getSkinFilePath( SkinID.SKIN_ID_COMMENT_BUTTON ) ) );
+		m_CreateTagBtn.setIcon( new ImageIcon( getSkinFilePath( SkinID.SKIN_ID_ADD_TAG_BUTTON ) ) );
 		m_CommWriter.setImage( getSkinFilePath( SkinID.SKIN_ID_COMM_WRITER_BG ) );
 		m_CommWriter.repaint();
 	}

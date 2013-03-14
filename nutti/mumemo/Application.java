@@ -1,9 +1,11 @@
 package nutti.mumemo;
 
 import java.awt.Color;
+import java.awt.Image;
 import java.awt.Rectangle;
 import java.io.IOException;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -15,7 +17,7 @@ import nutti.mumemo.Constant.ComponentID;
 
 public class Application
 {
-	private static final String APP_TITLE = "Music Memo";			// アプリケーションのタイトル
+	private static final String APP_TITLE = "MuMeMo";			// アプリケーションのタイトル
 	private static final Rectangle WIN_BOUND = new Rectangle( 100, 100, 620, 500 );			// ウィンドウサイズ
 
 	private JFrame		m_MainWnd;		// メインウィンドウ
@@ -71,6 +73,7 @@ public class Application
 		m_MainWnd.setBounds( WIN_BOUND );		// ウィンドウサイズの設定
 		m_MainWnd.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );		// ×ボタンで閉じる
 		m_MainWnd.setLayout( null );			// レイアウトマネージャを停止
+		m_MainWnd.setResizable( false );
 
 
 		m_MsgMediator = new MessageMediator();
@@ -100,6 +103,9 @@ public class Application
 
 		m_MainWnd.getContentPane().setBackground( Color.BLACK );
 		m_MainWnd.setVisible( true );
+
+		ImageIcon icon = new ImageIcon( "mumemo_icon.png" );
+		m_MainWnd.setIconImage( icon.getImage() );
 
 		m_MsgMediator.postMsg( ComponentID.COM_ID_APP_MAIN,  Constant.MsgID.MSG_ID_APP_INIT.ordinal(), null );
 

@@ -29,11 +29,13 @@ public class Menu extends IComponent
 	private JMenuBar							m_MenuBar;			// メニューバー
 
 	private JMenu								m_ConfigMenu;		// 「設定メニュー」
-
 	private JMenu								m_SkinConfigRoot;	// 「スキンの設定」
 	private ArrayList < JCheckBoxMenuItem >		m_SkinList;			// スキンリスト
-
 	private JMenuItem							m_CommNameConfig;	// 「コメント名設定」
+
+
+	private JMenu								m_HelpMenu;			// 「ヘルプメニュー」
+	private JMenuItem							m_About;		// 「バージョン情報など」
 
 	private JFrame								m_MainWnd;			// メインウィンドウ
 
@@ -45,6 +47,11 @@ public class Menu extends IComponent
 			if( event.getActionCommand().equals( "Change Comment Name" ) ){
 				m_CommNameCfgWin = new CommentNameConfigWindow( m_MainWnd, true );
 				m_CommNameCfgWin.setVisible( true );
+			}
+			// About...
+			else if( event.getActionCommand().equals( "About Mumemo ..." ) ){
+				m_AboutWin = new AboutWindow( m_MainWnd, true );
+				m_AboutWin.setVisible( true );
 			}
 			// スキン変更
 			else{
@@ -71,7 +78,7 @@ public class Menu extends IComponent
 	private class CommentNameConfigWindow extends JDialog
 	{
 		private static final long serialVersionUID = 1L;
-		
+
 		private JLabel			m_CurNameLbl;		// 現在のラベル名
 		private JTextField		m_CurName;			// 現在のコメント者名
 		private JLabel			m_NewNameLbl;		// 変更後のラベル名
@@ -99,8 +106,14 @@ public class Menu extends IComponent
 		{
 			super( owner, modal );
 
+			final int WIDTH = 220;
+			final int HEIGHT = 200;
+
 			setLayout( null );
-			setBounds( new Rectangle( 100, 100, 220, 200 ) );
+			setResizable( false );
+			setBounds( new Rectangle(	m_MainWnd.getLocation().x + ( m_MainWnd.getWidth() - WIDTH ) / 2,
+										m_MainWnd.getLocation().y + ( m_MainWnd.getHeight() - HEIGHT ) / 2,
+										WIDTH, HEIGHT ) );
 			getContentPane().setBackground( Color.BLACK );
 			setTitle( "Config Comment Name" );
 
@@ -143,6 +156,84 @@ public class Menu extends IComponent
 		}
 	};
 
+	// コメント名設定ダイアログ
+	private AboutWindow		m_AboutWin;
+	private class AboutWindow extends JDialog
+	{
+		private static final long serialVersionUID = 1L;
+
+		private JLabel		m_SoftName;			// ソフト名
+		private JLabel		m_Version;			// バージョン
+		private JLabel		m_Developer;		// 開発者
+		private JLabel		m_CopyWrite;		// コピーライト
+		private JButton		m_OKBtn;			// OKボタン
+
+		private ActionListener		m_AL = new ActionListener()
+		{
+			public void actionPerformed( ActionEvent event )
+			{
+				String cmd = event.getActionCommand();
+
+				if( cmd.equals( "OK" ) ){
+					setVisible( false );
+				}
+			}
+		};
+
+		public AboutWindow( Frame owner, boolean modal )
+		{
+			super( owner, modal );
+
+			final int WIDTH = 350;
+			final int HEIGHT = 220;
+
+			setLayout( null );
+			setResizable( false );
+			setBounds( new Rectangle(	m_MainWnd.getLocation().x + ( m_MainWnd.getWidth() - WIDTH ) / 2,
+										m_MainWnd.getLocation().y + ( m_MainWnd.getHeight() - HEIGHT ) / 2,
+										WIDTH, HEIGHT ) );
+			getContentPane().setBackground( Color.BLACK );
+			setTitle( "Abount Mumemo ..." );
+
+			m_SoftName = new JLabel( "Mumemo" );
+			m_SoftName.setBounds( 20, 20, 160, 17 );
+			m_SoftName.setBorder( null );
+			m_SoftName.setBackground( Color.BLACK );
+			m_SoftName.setForeground( Color.WHITE );
+			add( m_SoftName );
+
+			char lower = 'a' + (char) ( Constant.MINOR_VERSION & 0xFF );
+			long upper = ( Constant.MINOR_VERSION >> 8 ) & 0xFF;
+			m_Version = new JLabel(	"Version : " + Long.toString( Constant.MAJOR_VERSION ) + "." +
+									Long.toString( upper ) + lower );
+			m_Version.setBounds( 20, 50, 160, 17 );
+			m_Version.setBorder( null );
+			m_Version.setBackground( Color.BLACK );
+			m_Version.setForeground( Color.WHITE );
+			add( m_Version );
+			
+			m_Developer = new JLabel( "Developer : ぬっち (Nutti)" );
+			m_Developer.setBounds( 20, 67, 160, 17 );
+			m_Developer.setBorder( null );
+			m_Developer.setBackground( Color.BLACK );
+			m_Developer.setForeground( Color.WHITE );
+			add( m_Developer );
+
+			m_CopyWrite = new JLabel( "copyright (c) 2013 Green Soybeans Soft. All right reserved." );
+			m_CopyWrite.setBounds( 20, 100, 310, 17 );
+			m_CopyWrite.setBorder( null );
+			m_CopyWrite.setBackground( Color.BLACK );
+			m_CopyWrite.setForeground( Color.WHITE );
+			add( m_CopyWrite );
+
+			m_OKBtn = new JButton( "OK" );
+			m_OKBtn.setBounds( 140, 140, 60, 20 );
+			m_OKBtn.setActionCommand( "OK" );
+			m_OKBtn.addActionListener( m_AL );
+			add( m_OKBtn );
+		}
+	};
+
 	public Menu( JFrame mainWnd, IMessageMediator mediator )
 	{
 		super( mediator, ComponentID.COM_ID_MENU );
@@ -179,6 +270,14 @@ public class Menu extends IComponent
 		m_CommNameConfig.addActionListener( m_MenuActionListener );
 		m_ConfigMenu.add( m_CommNameConfig );
 		m_MenuBar.add( m_ConfigMenu );
+
+
+		// ヘルプメニューの作成
+		m_HelpMenu = new JMenu( "Help" );
+		m_About = new JMenuItem( "About Mumemo ..." );
+		m_About.addActionListener( m_MenuActionListener );
+		m_HelpMenu.add( m_About );
+		m_MenuBar.add( m_HelpMenu );
 
 		mainWnd.setJMenuBar( m_MenuBar );
 

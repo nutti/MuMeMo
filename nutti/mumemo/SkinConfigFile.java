@@ -18,9 +18,12 @@ public class SkinConfigFile
 		SKIN_ID_PAUSING_BUTTON,				// 一時停止中ボタン
 		SKIN_ID_PLAY_MODE_ONCE_BUTTON,		// 一度再生ボタン
 		SKIN_ID_PLAY_MODE_REPEAT_BUTTON,	// 連続再生ボタン
+		SKIN_ID_COMMENT_BUTTON,				// コメントボタン
+		SKIN_ID_ADD_TAG_BUTTON,				// タグ追加ボタン
 
 		SKIN_ID_PLAY_LIST_BG,				// プレイリストの背景
 		SKIN_ID_COMM_WRITER_BG,				// コメントライターの背景
+		SKIN_ID_COMMENT_BG,					// コメントの背景
 	}
 
 	private static final String PLAY_BUTTON_TAG					= "PLAY_BUTTON";
@@ -30,8 +33,12 @@ public class SkinConfigFile
 	private static final String PAUSING_BUTTON_TAG				= "PAUSING_BUTTON";
 	private static final String PLAY_MODE_ONCE_BUTTON_TAG		= "PLAY_MODE_ONCE_BUTTON";
 	private static final String PLAY_MODE_REPEAT_BUTTON_TAG		= "PLAY_MODE_REPEAT_BUTTON";
+	private static final String COMMENT_BUTTON_TAG				= "COMMENT_BUTTON";
+	private static final String ADD_TAG_BUTTON_TAG				= "ADD_TAG_BUTTON";
+
 	private static final String PLAY_LIST_BG_TAG				= "PLAY_LIST_BG";
 	private static final String COMM_WRITER_BG_TAG				= "COMM_WRITER_BG";
+	private static final String COMMENT_BG_TAG					= "COMMENT_BG";
 
 	private static final SkinConfigFile		m_Inst = new SkinConfigFile();
 
@@ -75,11 +82,20 @@ public class SkinConfigFile
 			else if( key.equals( PLAY_MODE_REPEAT_BUTTON_TAG ) ){
 				m_SkinFilePath.put( SkinID.SKIN_ID_PLAY_MODE_REPEAT_BUTTON, value );
 			}
+			else if( key.equals( COMMENT_BUTTON_TAG ) ){
+				m_SkinFilePath.put( SkinID.SKIN_ID_COMMENT_BUTTON, value );
+			}
+			else if( key.equals( ADD_TAG_BUTTON_TAG ) ){
+				m_SkinFilePath.put( SkinID.SKIN_ID_ADD_TAG_BUTTON, value );
+			}
 			else if( key.equals( PLAY_LIST_BG_TAG ) ){
 				m_SkinFilePath.put( SkinID.SKIN_ID_PLAY_LIST_BG, value );
 			}
 			else if( key.equals( COMM_WRITER_BG_TAG ) ){
 				m_SkinFilePath.put( SkinID.SKIN_ID_COMM_WRITER_BG, value );
+			}
+			else if( key.equals( COMMENT_BG_TAG ) ){
+				m_SkinFilePath.put( SkinID.SKIN_ID_COMMENT_BG, value );
 			}
 		}
 	}
