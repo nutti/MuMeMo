@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.net.ssl.SSLEngineResult.Status;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -124,6 +125,7 @@ public class MusicPlayerCore implements Runnable
 	{
 		byte[] data = new byte[ 16000 ];
 		m_SrcDataLine = getSrcLine( fmt );		// オーディオバッファ
+		m_Status = StatusFlag.PLAY;
 		if( m_SrcDataLine != null ){
 			// 再生開始
 			m_SrcDataLine.start();
@@ -144,25 +146,25 @@ public class MusicPlayerCore implements Runnable
 				try{
 					synchronized( m_AudioStream ){
 						readBytes = m_AudioStream.read( data, 0, data.length );	// ファイルからオーディオデータを読み込む
-						if( readBytes != -1 ){
-							writeBytes = m_SrcDataLine.write( data, 0, readBytes );	// 再生
+					}
+					if( readBytes != -1 ){
+						writeBytes = m_SrcDataLine.write( data, 0, readBytes );	// 再生
 
-							// 読み込んだバイト数を取得
-							long encodedBytes = -1;
-							if( m_File instanceof File ){
-								try{
-									if( m_AudioStreamOrig != null ){
-										encodedBytes = m_EncodedTotalBytes - ( (long) m_AudioStreamOrig.available() );
-									}
-								}
-								catch( IOException e ){
-									e.printStackTrace();
+						// 読み込んだバイト数を取得
+						long encodedBytes = -1;
+						if( m_File instanceof File ){
+							try{
+								if( m_AudioStreamOrig != null ){
+									encodedBytes = m_EncodedTotalBytes - ( (long) m_AudioStreamOrig.available() );
 								}
 							}
-
-
-							m_MusicPlayerListner.progress( encodedBytes, /*m_SrcDataLine.getMicrosecondPosition()*/0, null, m_AudioInfo );
+							catch( IOException e ){
+								e.printStackTrace();
+							}
 						}
+
+
+						m_MusicPlayerListner.progress( encodedBytes, /*m_SrcDataLine.getMicrosecondPosition()*/0, null, m_AudioInfo );
 					}
 				}
 				catch( NullPointerException e ){
@@ -170,8 +172,11 @@ public class MusicPlayerCore implements Runnable
 
 			}
 			// 再生停止
-			if( m_Status == StatusFlag.PLAY ){
+			if( m_Status == StatusFlag.PLAY || m_Status == StatusFlag.PLAYING ){
 				m_SrcDataLine.drain();		// オーディオバッファ上のデータ全て再生されるまで待つ
+			}
+			else{
+				m_SrcDataLine.flush();
 			}
 			m_SrcDataLine.stop();
 			m_SrcDataLine.close();
@@ -204,7 +209,7 @@ public class MusicPlayerCore implements Runnable
 				if( m_Status == StatusFlag.TERM ){
 					break;
 				}
-				if( m_Status == StatusFlag.PLAY ){
+				if( m_Status == StatusFlag.PLAY || m_Status == StatusFlag.PLAYING ){
 					playRawWavData( m_AudioFmt );
 				}
 				if( m_Status == StatusFlag.EOF ){
@@ -241,7 +246,16 @@ public class MusicPlayerCore implements Runnable
 			e.printStackTrace();
 		}
 
-		updateStatus( StatusFlag.PLAY );
+		updateStatus( StatusFlag.PLAYING );
+
+		while( m_Status != StatusFlag.PLAY ){
+			try{
+				Thread.sleep( 1 );
+			}
+			catch( InterruptedException e ){
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public void stop()
@@ -253,7 +267,12 @@ public class MusicPlayerCore implements Runnable
 		}
 		updateStatus( StatusFlag.STOPING );
 		while( m_Status != StatusFlag.STOP ){
-
+			try{
+				Thread.sleep( 1 );
+			}
+			catch( InterruptedException e ){
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -342,8 +361,8 @@ public class MusicPlayerCore implements Runnable
 			if( m_AudioStreamOrig != null ){
 				m_AudioStreamOrig.close();
 			}
-			m_PanCtrl = null;
-			m_VolumeCtrl = null;
+		//	m_PanCtrl = null;
+		//	m_VolumeCtrl = null;
 		}
 		catch( IOException e ){
 			e.printStackTrace();
@@ -357,11 +376,12 @@ public class MusicPlayerCore implements Runnable
 		synchronized( m_AudioStream ){
 			StatusFlag prevStatus = m_Status;
 			updateStatus( StatusFlag.SEEK );
+			m_SrcDataLine.flush();
 			try{
 				m_AudioStreamOrig = AudioSystem.getAudioInputStream( m_File );
 				m_AudioStream = AudioSystem.getAudioInputStream( m_AudioFmt, m_AudioStreamOrig );
-				m_PanCtrl = null;
-				m_VolumeCtrl = null;
+			//	m_PanCtrl = null;
+			//	m_VolumeCtrl = null;
 				while( skippedTotal < pos ){
 					skipped = m_AudioStream.skip( pos - skippedTotal );
 
@@ -403,11 +423,11 @@ public class MusicPlayerCore implements Runnable
 	// パンの設定（スレッドセーフ）
 	public void setPan( double pan )
 	{
-		if( m_PanCtrl == null ){
+		//if( m_PanCtrl == null ){
 			if ( ( m_SrcDataLine != null ) && ( m_SrcDataLine.isControlSupported( FloatControl.Type.PAN ) ) ){
 				m_PanCtrl = (FloatControl) m_SrcDataLine.getControl( FloatControl.Type.PAN );
 			 }
-		}
+		//}
 		if( m_PanCtrl == null ){
 			return;
 		}
@@ -417,11 +437,12 @@ public class MusicPlayerCore implements Runnable
 	// 音量の設定（スレッドセーフ）
 	public void setVolume( double volume )
 	{
-		if( m_VolumeCtrl == null ){
+
+		//if( m_VolumeCtrl == null ){
 			if ( ( m_SrcDataLine != null ) && ( m_SrcDataLine.isControlSupported( FloatControl.Type.MASTER_GAIN ) ) ){
 				m_VolumeCtrl = (FloatControl) m_SrcDataLine.getControl( FloatControl.Type.MASTER_GAIN );
 			}
-		}
+		//}
 		if( m_VolumeCtrl == null ){
 			return;
 		}

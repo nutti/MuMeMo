@@ -16,6 +16,7 @@ public class MusicPlayer
 {
 	public enum StatusFlag
 	{
+		PLAYING,
 		PLAY,
 		STOPING,
 		STOP,

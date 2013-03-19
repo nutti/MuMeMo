@@ -5,6 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -65,6 +67,65 @@ public class PlayController extends IComponent implements ActionListener
 
 	private AudioInfo		m_AudioInfo;
 
+	public enum EventID
+	{
+		EVENT_ID_EOM,		// End of music.
+		EVENT_ID_TOTAL,
+	}
+
+	// イベントオブザーバー
+	private class EventObserver
+	{
+		public void eventReceived( EventID event )
+		{
+			m_Player.stop();
+			playMusic();
+		}
+	}
+
+	// イベントハンドラスレッド
+	private EventHandlerThread		m_EventHandler = new EventHandlerThread();
+	private class EventHandlerThread implements Runnable
+	{
+		private Queue < EventID >			m_EventQueue;
+		private boolean						m_HasTermSig;
+		private EventObserver				m_EventObserver;
+
+		public void run()
+		{
+			m_EventObserver = new EventObserver();
+			m_EventQueue = new LinkedList < EventID > ();
+			m_EventQueue.clear();
+			m_HasTermSig = false;
+			while( !m_HasTermSig ){
+				if( m_EventQueue.isEmpty() ){
+					try{
+						Thread.sleep( 1 );
+					}
+					catch( InterruptedException e ){
+						e.printStackTrace();
+					}
+					continue;
+				}
+				EventID event = m_EventQueue.poll();
+				if( m_EventObserver != null ){
+					m_EventObserver.eventReceived( event );
+				}
+			}
+		}
+
+		public void terminate()
+		{
+			m_HasTermSig = true;
+		}
+
+		public void notifyEvent( EventID event )
+		{
+			m_EventQueue.add( event );
+		}
+
+	}
+
 
 	private IMusicPlayerListener		m_MusicPlayerListener = new IMusicPlayerListener()
 	{
@@ -124,9 +185,9 @@ public class PlayController extends IComponent implements ActionListener
 		{
 			if( status == StatusFlag.EOF ){
 				if( m_PlayModeBtn.getActionCommand().equals( PLAY_MODE_BUTTON_NAME[ PlayMode.PLAY_MODE_REPEAT.ordinal() ] ) ){
-					//m_Player.close();
-					m_Player.stop();
-					playMusic();
+					//m_Player.stop();
+					//playMusic();
+					m_EventHandler.notifyEvent( EventID.EVENT_ID_EOM );
 				}
 			}
 		}
@@ -271,6 +332,9 @@ public class PlayController extends IComponent implements ActionListener
 
 		m_Paused = false;
 
+		Thread th = new Thread( m_EventHandler );
+		th.start();
+
 		setupSkins();
 
 		mainWnd.add( m_PlayCtrl );
@@ -353,6 +417,11 @@ public class PlayController extends IComponent implements ActionListener
 			case COM_ID_MENU:
 				if( msg == Constant.MsgID.MSG_ID_SKIN_CHANGED.ordinal() ){
 					setupSkins();
+				}
+				break;
+			case COM_ID_APP_MAIN:
+				if( msg == Constant.MsgID.MSG_ID_APP_TERM.ordinal() ){
+					m_EventHandler.terminate();
 				}
 				break;
 			default:

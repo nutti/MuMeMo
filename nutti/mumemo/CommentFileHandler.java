@@ -140,8 +140,11 @@ public class CommentFileHandler
 		try {
 			in = new FileInputStream( m_FileName );
 
+			// バージョンチェック
 			long version = Util.loadLong( in );
-			if( version != Constant.MUMEMO_VERSION ){
+			VersionChecker checker = new VersionChecker();
+			checker.checkVersion( version );
+			if( !checker.majorVerMatched() || !checker.minorVerUMatched() ){
 				return;
 			}
 
@@ -351,4 +354,5 @@ public class CommentFileHandler
 	{
 		return m_FileName.equals( "" );
 	}
+
 }

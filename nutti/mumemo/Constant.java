@@ -2,10 +2,15 @@ package nutti.mumemo;
 
 public class Constant
 {
-	public static final long		MAJOR_VERSION	= 0;
-	public static final long		MINOR_VERSION	= 10 << 8 | 0;
+	public static final long		MAJOR_VERSION	= 0;			// メジャーバージョン
+	public static final long		MINOR_UPPER_VERSION	= 1;		// マイナーバージョン（保存データに影響があるバージョン）
+	public static final long		MINOR_MIDDLE_VERSION = 0;		// マイナーバージョン（機能に影響があるバージョン）
+	public static final long		MINOR_LOWER_VERSION = 1;		// マイナーバージョン（バグ修正バージョン）
 
-	public static final long		MUMEMO_VERSION	= MAJOR_VERSION << 16 | MINOR_VERSION;
+	public static final long		MUMEMO_VERSION	=	MAJOR_VERSION << 24 |
+														MINOR_UPPER_VERSION << 16 |
+														MINOR_MIDDLE_VERSION << 8 |
+														MINOR_LOWER_VERSION;
 
 	public enum ComponentID
 	{

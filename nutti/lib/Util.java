@@ -62,7 +62,7 @@ public class Util
 			if( val == -1 ){
 				throw new LibException( "Failed to read.");
 			}
-			value |= ( val ) << ( i * 8 );
+			value |= (long)( ( (long) ( val ) ) << ( i * 8 ) );
 		}
 
 		return value;

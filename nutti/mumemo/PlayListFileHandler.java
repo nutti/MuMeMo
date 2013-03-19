@@ -54,7 +54,9 @@ public class PlayListFileHandler
 
 			// バージョンチェック
 			long version = Util.loadLong( in );
-			if( version != Constant.MUMEMO_VERSION ){
+			VersionChecker checker = new VersionChecker();
+			checker.checkVersion( version );
+			if( !checker.majorVerMatched() || !checker.minorVerUMatched() ){
 				return;
 			}
 

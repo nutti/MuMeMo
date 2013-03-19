@@ -202,16 +202,17 @@ public class Menu extends IComponent
 			m_SoftName.setForeground( Color.WHITE );
 			add( m_SoftName );
 
-			char lower = 'a' + (char) ( Constant.MINOR_VERSION & 0xFF );
-			long upper = ( Constant.MINOR_VERSION >> 8 ) & 0xFF;
+			char lower = 'a' + (char) ( Constant.MINOR_LOWER_VERSION );
+			long middle = Constant.MINOR_MIDDLE_VERSION;
+			long upper = Constant.MINOR_UPPER_VERSION;
 			m_Version = new JLabel(	"Version : " + Long.toString( Constant.MAJOR_VERSION ) + "." +
-									Long.toString( upper ) + lower );
+									Long.toString( upper ) + Long.toString( middle ) + lower );
 			m_Version.setBounds( 20, 50, 160, 17 );
 			m_Version.setBorder( null );
 			m_Version.setBackground( Color.BLACK );
 			m_Version.setForeground( Color.WHITE );
 			add( m_Version );
-			
+
 			m_Developer = new JLabel( "Developer : ぬっち (Nutti)" );
 			m_Developer.setBounds( 20, 67, 160, 17 );
 			m_Developer.setBorder( null );
